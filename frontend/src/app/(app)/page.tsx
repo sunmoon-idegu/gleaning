@@ -82,32 +82,34 @@ export default function FeedPage() {
   const quote = quotes[index];
 
   return (
-    <div className="-my-8 h-[calc(100vh-56px)] flex flex-col items-center justify-center gap-8 px-4">
-      {/* Card */}
-      <div key={index} className="relative w-full max-w-2xl rounded-2xl border border-transparent px-10 py-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
-        <QuoteCard
-          quote={quote}
-          onDeleted={(id) => {
-            const next = quotes.filter((x) => x.id !== id);
-            setQuotes(next);
-            setIndex((i) => Math.min(i, Math.max(0, next.length - 1)));
-          }}
-          onUpdated={(updated) => setQuotes((qs) => qs.map((x) => x.id === updated.id ? updated : x))}
-        />
-      </div>
+    <div className="-my-8 h-[calc(100vh-56px)] flex items-center justify-center px-4">
+      {/* Card + right arrow */}
+      <div className="relative w-full max-w-2xl">
+        <div key={index} className="relative rounded-2xl border border-transparent px-10 py-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+          <QuoteCard
+            quote={quote}
+            onDeleted={(id) => {
+              const next = quotes.filter((x) => x.id !== id);
+              setQuotes(next);
+              setIndex((i) => Math.min(i, Math.max(0, next.length - 1)));
+            }}
+            onUpdated={(updated) => setQuotes((qs) => qs.map((x) => x.id === updated.id ? updated : x))}
+          />
+        </div>
 
-      {/* Navigation */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground tabular-nums">
-          {index + 1} / {quotes.length}
-        </span>
-        <button
-          onClick={() => setIndex((i) => (i + 1) % quotes.length)}
-          className="cursor-pointer p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title="Next (Space)"
-        >
-          <ChevronRight size={18} />
-        </button>
+        {/* Counter + arrow — anchored to right of card */}
+        <div className="absolute top-1/2 -translate-y-1/2 -right-16 flex flex-col items-center gap-2">
+          <button
+            onClick={() => setIndex((i) => (i + 1) % quotes.length)}
+            className="cursor-pointer p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Next (Space)"
+          >
+            <ChevronRight size={18} />
+          </button>
+          <span className="text-xs text-muted-foreground/50 tabular-nums">
+            {index + 1}/{quotes.length}
+          </span>
+        </div>
       </div>
     </div>
   );

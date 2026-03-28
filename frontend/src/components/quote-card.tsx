@@ -124,7 +124,7 @@ export function QuoteCard({ quote, onDeleted, onUpdated }: QuoteCardProps) {
       </div>
 
       {/* Quote text */}
-      <blockquote className="text-2xl leading-relaxed tracking-[-0.01em] text-foreground font-[350]">
+      <blockquote className="text-3xl leading-relaxed tracking-[-0.02em] text-foreground font-[350]">
         {quote.text}
       </blockquote>
 
