@@ -124,12 +124,12 @@ export function QuoteCard({ quote, onDeleted, onUpdated }: QuoteCardProps) {
       </div>
 
       {/* Quote text */}
-      <blockquote className="text-xl leading-relaxed tracking-[-0.01em] text-foreground font-[350]">
+      <blockquote className="text-2xl leading-relaxed tracking-[-0.01em] text-foreground font-[350]">
         {quote.text}
       </blockquote>
 
       {/* Footer: source + tags + date */}
-      <footer className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <footer className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1">
         {(title || author || page) && (
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             {SourceIcon && <SourceIcon size={12} className="shrink-0" />}

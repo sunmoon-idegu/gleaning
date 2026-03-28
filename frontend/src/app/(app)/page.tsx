@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { apiFetch, waitForToken, type Quote } from "@/lib/api";
 import { QuoteCard } from "@/components/quote-card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export default function FeedPage() {
   const { getToken } = useAuth();
@@ -42,8 +42,10 @@ export default function FeedPage() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
-      if (e.key === "ArrowRight") setIndex((i) => Math.min(quotes.length - 1, i + 1));
+      if (e.key === " ") {
+        e.preventDefault();
+        setIndex((i) => (i + 1) % quotes.length);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -82,7 +84,7 @@ export default function FeedPage() {
   return (
     <div className="-my-8 h-[calc(100vh-56px)] flex flex-col items-center justify-center gap-8 px-4">
       {/* Card */}
-      <div key={index} className="relative w-full max-w-2xl rounded-2xl border border-border px-10 py-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+      <div key={index} className="relative w-full max-w-2xl rounded-2xl border border-transparent px-10 py-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
         <QuoteCard
           quote={quote}
           onDeleted={(id) => {
@@ -95,23 +97,14 @@ export default function FeedPage() {
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          disabled={index === 0}
-          className="cursor-pointer p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-20 disabled:cursor-default"
-        >
-          <ChevronLeft size={18} />
-        </button>
-
+      <div className="flex items-center gap-3">
         <span className="text-sm text-muted-foreground tabular-nums">
           {index + 1} / {quotes.length}
         </span>
-
         <button
-          onClick={() => setIndex((i) => Math.min(quotes.length - 1, i + 1))}
-          disabled={index === quotes.length - 1}
-          className="cursor-pointer p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-20 disabled:cursor-default"
+          onClick={() => setIndex((i) => (i + 1) % quotes.length)}
+          className="cursor-pointer p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          title="Next (Space)"
         >
           <ChevronRight size={18} />
         </button>
