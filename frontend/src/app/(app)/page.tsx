@@ -13,16 +13,31 @@ export default function FeedPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => { document.title = "Feed · Quote"; }, []);
 
   useEffect(() => {
     (async () => {
-      const token = await waitForToken(getToken);
-      
-      const data = await apiFetch<Quote[]>("/quotes", token);
-      setQuotes(data);
-      setLoading(false);
+      try {
+        const token = await waitForToken(getToken);
+        const data = await apiFetch<Quote[]>("/quotes", token);
+        setQuotes(data);
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [getToken]);
+
+  if (error) {
+    return (
+      <div className="text-center py-32 text-neutral-400">
+        <p className="text-sm">Failed to load quotes. Please refresh.</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

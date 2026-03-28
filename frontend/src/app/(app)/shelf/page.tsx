@@ -46,6 +46,7 @@ export default function ShelfPage() {
   const { getToken } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   // Add book form
   const [showForm, setShowForm] = useState(false);
@@ -69,12 +70,19 @@ export default function ShelfPage() {
 
   useEffect(() => {
     (async () => {
-      const token = await waitForToken(getToken);
-      const data = await apiFetch<Book[]>("/books", token);
-      setBooks([...data].sort((a, b) => a.title.localeCompare(b.title)));
-      setLoading(false);
+      try {
+        const token = await waitForToken(getToken);
+        const data = await apiFetch<Book[]>("/books", token);
+        setBooks([...data].sort((a, b) => a.title.localeCompare(b.title)));
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [getToken]);
+
+  useEffect(() => { document.title = "Shelf · Quote"; }, []);
 
   useEffect(() => {
     if (showForm) setTimeout(() => titleRef.current?.focus(), 50);
@@ -123,6 +131,14 @@ export default function ShelfPage() {
     setBooks((bs) => bs.filter((b) => b.id !== deleteBookId));
     setDeleteBookId(null);
     setDeleting(false);
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-32 text-neutral-400">
+        <p className="text-sm">Failed to load books. Please refresh.</p>
+      </div>
+    );
   }
 
   if (loading) {

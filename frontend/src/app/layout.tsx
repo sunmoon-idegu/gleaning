@@ -7,7 +7,10 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
-  title: "Quote",
+  title: {
+    default: "Quote",
+    template: "%s · Quote",
+  },
   description: "Capture and recall beautiful sentences",
   icons: {
     icon: "/favicon.svg",

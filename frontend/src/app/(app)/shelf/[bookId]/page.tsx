@@ -17,19 +17,33 @@ export default function BookPage() {
   const { getToken } = useAuth();
   const [book, setBook] = useState<BookWithQuotes | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const token = await waitForToken(getToken);
-      
-      const data = await apiFetch<BookWithQuotes>(`/books/${bookId}`, token);
-      setBook(data);
-      setLoading(false);
+      try {
+        const token = await waitForToken(getToken);
+        const data = await apiFetch<BookWithQuotes>(`/books/${bookId}`, token);
+        setBook(data);
+        document.title = `${data.title} · Quote`;
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [getToken, bookId]);
 
   if (loading) {
     return <div className="py-12 text-center text-neutral-400 text-sm animate-pulse">Loading…</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-32 text-neutral-400">
+        <p className="text-sm">Failed to load book. Please refresh.</p>
+      </div>
+    );
   }
 
   if (!book) return null;
