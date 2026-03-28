@@ -32,6 +32,7 @@ interface QuoteCardProps {
 export function QuoteCard({ quote, onDeleted, onUpdated }: QuoteCardProps) {
   const { getToken } = useAuth();
 
+  const isChinese = /[\u4e00-\u9fff]/.test(quote.text);
   const s = quote.source;
   const SourceIcon = s ? sourceIcons[s.type] : null;
   const title = s?.title ?? s?.book?.title ?? null;
@@ -124,7 +125,7 @@ export function QuoteCard({ quote, onDeleted, onUpdated }: QuoteCardProps) {
       </div>
 
       {/* Quote text */}
-      <blockquote className="text-3xl leading-relaxed tracking-[-0.02em] text-foreground font-[350]">
+      <blockquote className={`text-3xl leading-relaxed tracking-normal text-foreground font-[350] ${isChinese ? "font-[family-name:var(--font-noto-serif-sc)]" : "font-[family-name:var(--font-geist-sans)]"}`}>
         {quote.text}
       </blockquote>
 
