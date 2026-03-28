@@ -75,12 +75,13 @@ export default function BookPage() {
       ) : (
         <div>
           {book.quotes.map((q) => (
-            <QuoteCard
-              key={q.id}
-              quote={q}
-              onDeleted={(id) => setBook((b) => b ? { ...b, quotes: b.quotes.filter((x) => x.id !== id) } : b)}
-              onUpdated={(updated) => setBook((b) => b ? { ...b, quotes: b.quotes.map((x) => x.id === updated.id ? updated : x) } : b)}
-            />
+            <div key={q.id} className="relative px-4 py-8">
+              <QuoteCard
+                quote={q}
+                onDeleted={(id) => setBook((b) => b ? { ...b, quotes: b.quotes.filter((x) => x.id !== id) } : b)}
+                onUpdated={(updated) => setBook((b) => b ? { ...b, quotes: b.quotes.map((x) => x.id === updated.id ? updated : x) } : b)}
+              />
+            </div>
           ))}
         </div>
       )}

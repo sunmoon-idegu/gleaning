@@ -82,7 +82,7 @@ export default function FeedPage() {
   return (
     <div className="-my-8 h-[calc(100vh-56px)] flex flex-col items-center justify-center gap-8 px-4">
       {/* Card */}
-      <div key={index} className="w-full max-w-2xl rounded-2xl border border-border px-10 py-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+      <div key={index} className="relative w-full max-w-2xl rounded-2xl border border-border px-10 py-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
         <QuoteCard
           quote={quote}
           onDeleted={(id) => {

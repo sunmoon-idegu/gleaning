@@ -104,9 +104,9 @@ export function QuoteCard({ quote, onDeleted, onUpdated }: QuoteCardProps) {
   }
 
   return (
-    <article className="relative py-4 border-b border-border last:border-0 group">
-      {/* Top-right action icons */}
-      <div className="absolute top-4 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <article className="border-b border-border last:border-0 group">
+      {/* Icons — absolute relative to outer card wrapper's padding */}
+      <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={() => setEditOpen(true)}
           className="cursor-pointer p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
@@ -124,7 +124,7 @@ export function QuoteCard({ quote, onDeleted, onUpdated }: QuoteCardProps) {
       </div>
 
       {/* Quote text */}
-      <blockquote className="pr-10 text-xl leading-relaxed tracking-[-0.01em] text-foreground font-[350]">
+      <blockquote className="text-xl leading-relaxed tracking-[-0.01em] text-foreground font-[350]">
         {quote.text}
       </blockquote>
 
