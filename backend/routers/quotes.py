@@ -72,7 +72,7 @@ def create_quote(
     db.flush()
     _set_tags(quote, body.tag_ids, db)
     db.commit()
-    return _own_quote_or_404(quote.id, current_user, db)
+    return _build_quote_out(_own_quote_or_404(quote.id, current_user, db))
 
 
 @router.get("/{quote_id}", response_model=QuoteOut)
