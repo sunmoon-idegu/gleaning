@@ -73,11 +73,18 @@ A sentence or paragraph worth keeping.
 - Quotes cycle through in chronological order (most recent first)
 - **Display mode** — hides the nav and add button for a distraction-free reading experience:
   - Desktop: press **F** to toggle, **Esc** to exit
-  - Mobile: **double-tap** the quote card to toggle
 - Newly added quotes appear instantly without a page reload
+- Click a quote text → opens the Quote Detail page (`/quotes/[id]`)
+
+### 2a. Quote Detail Page (`/quotes/[id]`)
+- Dedicated URL for each quote — bookmarkable, shareable
+- Shows: full quote text, source, tags, creation date
+- Actions: Copy (browser clipboard), Edit (inline dialog), Delete
 
 ### 3. Shelf (Browse by Book)
-- Grid of all books with cover images (if available) and quote counts
+- Grid of all books grouped by language, with quote counts
+- "Add book" button opens a modal dialog (title, optional author, optional language)
+- Each book card has an overflow menu (⋯) to edit or delete the book
 - Tap a book → quotes sorted by page number
 - Quotes added from within a book's page are pre-linked to that book
 
@@ -105,16 +112,57 @@ A sentence or paragraph worth keeping.
 
 ---
 
+## Mobile App (iPhone)
+
+Separate client, same backend API. Primary job: **capture** — the web app is for browsing and reading, the mobile app is for saving quotes on the go.
+
+### Core mobile flow
+1. Open app → camera button or photo library
+2. Take photo of a page / screenshot anything
+3. Draw a selection box over the text region (draggable, resizable via corner handles)
+4. Claude extracts all readable sentences from the selection
+5. User taps the sentence they want
+6. Pre-fills quote text → user confirms source/tags → save
+
+### Mobile screens
+| Screen | Description |
+|--------|-------------|
+| Feed | Quote list with two display modes (see below) |
+| Quote Detail | Full quote with Copy + Share actions; swipe left edge to go back |
+| Shelf | Books grouped by language; tap book → quotes by page |
+| Add | Manual entry + camera/library OCR capture |
+| Search | Full-text search across quotes, sources, tags |
+| Settings | Theme (Light / Dark / Colorful) + Feed display mode; both persisted locally |
+
+### Feed display modes
+- **List** — scrollable list of quote cards; tap any card → Quote Detail page
+- **Card** — full-screen one-quote-at-a-time view; swipe left/right to browse; `x / N` counter; tap to open Quote Detail
+
+### Mobile tech stack
+| Layer | Choice | Notes |
+|-------|--------|-------|
+| Framework | Expo (React Native) | TypeScript, same patterns as web frontend |
+| Auth | Clerk Expo SDK | Same Clerk instance as web |
+| Camera | Expo Image Picker | Opens camera or photo library |
+| OCR | Claude (via `/ocr` backend endpoint) | Handles messy angles, lighting, extracts clean sentences |
+| Clipboard | expo-clipboard | Native copy-to-clipboard in Quote Detail |
+| Storage | expo-secure-store | Persists theme + feed mode across sessions |
+
+### New backend endpoint
+`POST /ocr` — receives a base64 image + optional crop region (normalized x/y/w/h), calls Claude, returns list of extracted sentences.
+
+---
+
 ## Out of Scope (for now)
 
 - Open registration (Phase 1 = your account only)
 - Payments / subscriptions
 - Export (PDF, CSV, etc.)
-- Mobile native app
-- Ebook import or OCR
+- Ebook import
 - Spaced repetition / flashcards
 - Public profiles
 - Social / sharing features
+- Auto-detect book from photo (v2)
 
 ---
 
@@ -133,9 +181,9 @@ A sentence or paragraph worth keeping.
 |--------------|---------------------------------|------------------------------------------------|
 | **Frontend** | Next.js (React)                 | Web first, mobile later                        |
 | **Backend**  | FastAPI (Python)                | REST API, business logic                       |
-| **Database** | PostgreSQL                      | Hosted on Railway                              |
+| **Database** | PostgreSQL                      | Hosted on Neon                                 |
 | **Auth**     | Clerk                           | Google OAuth, JWT verification via JWKS        |
-| **Hosting**  | Vercel (frontend) + Railway (backend) | Simple deploys                           |
+| **Hosting**  | Vercel (frontend) + Render (backend) | Free tier; keep-alive cron prevents spin-down |
 | **Monitoring** | Sentry                        | Error tracking; `/health` endpoint probes DB   |
 
 ---

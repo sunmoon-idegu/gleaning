@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Gleaning",
+    "slug": "gleaning-mobile",
+    "version": "1.0.0",
+    "scheme": "io.gleaning.app",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "io.gleaning.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Used to pick a photo of a page to extract a quote.",
+        "NSCameraUsageDescription": "Used to take a photo of a page to extract a quote."
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Used to pick a photo of a page to extract a quote.",
+          "cameraPermission": "Used to take a photo of a page to extract a quote."
+        }
+      ]
+    ]
+  }
+}
