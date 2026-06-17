@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import type { Quote } from "@/lib/api";
 import { apiFetch, waitForToken } from "@/lib/api";
 import { BookOpen, Video, Mic, Pencil, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -131,10 +132,12 @@ export function QuoteCard({ quote, hideDate, onDeleted, onUpdated }: QuoteCardPr
         </button>
       </div>
 
-      {/* Quote text */}
-      <blockquote className={`${sizeClass} leading-relaxed whitespace-pre-wrap text-foreground font-[350] ${isChinese ? "font-[family-name:var(--font-noto-serif-sc)]" : "font-[family-name:var(--font-geist-sans)]"}`}>
-        {quote.text}
-      </blockquote>
+      {/* Quote text — links to the dedicated quote page */}
+      <Link href={`/quotes/${quote.id}`} className="block no-underline hover:no-underline group/link">
+        <blockquote className={`${sizeClass} leading-relaxed whitespace-pre-wrap text-foreground font-[350] group-hover/link:text-foreground/80 transition-colors ${isChinese ? "font-[family-name:var(--font-noto-serif-sc)]" : "font-[family-name:var(--font-geist-sans)]"}`}>
+          {quote.text}
+        </blockquote>
+      </Link>
 
       {/* Footer: source + tags + date */}
       <footer className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1">

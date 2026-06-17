@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { apiFetch, waitForToken, LANGUAGES, type Book } from "@/lib/api";
 import Link from "next/link";
-import { BookOpen, Plus, X, MoreHorizontal } from "lucide-react";
+import { BookOpen, Plus, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +16,9 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { LanguageSelect } from "@/components/language-select";
 
@@ -48,8 +48,8 @@ export default function ShelfPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Add book form
-  const [showForm, setShowForm] = useState(false);
+  // Add book modal
+  const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [language, setLanguage] = useState("");
@@ -87,8 +87,8 @@ export default function ShelfPage() {
   useEffect(() => { document.title = "Shelf · Gleaning"; }, []);
 
   useEffect(() => {
-    if (showForm) setTimeout(() => titleRef.current?.focus(), 50);
-  }, [showForm]);
+    if (showAdd) setTimeout(() => titleRef.current?.focus(), 50);
+  }, [showAdd]);
 
   async function handleAddBook(e: React.FormEvent) {
     e.preventDefault();
@@ -102,7 +102,7 @@ export default function ShelfPage() {
     setBooks((b) => [...b, book].sort((a, z) => a.title.localeCompare(z.title)));
     setTitle(""); setAuthor(""); setLanguage("");
     setSaving(false); setSaved(true);
-    setTimeout(() => { setSaved(false); setShowForm(false); }, 1000);
+    setTimeout(() => { setSaved(false); setShowAdd(false); }, 1000);
   }
 
   function openEdit(book: Book) {
@@ -160,34 +160,36 @@ export default function ShelfPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold">Shelf</h1>
-        <Button onClick={() => setShowForm((v) => !v)}>
+        <Button onClick={() => setShowAdd(true)}>
           <Plus size={14} /> Add book
         </Button>
       </div>
 
-      {/* Add book form */}
-      {showForm && (
-        <form onSubmit={handleAddBook} className="mb-8 border border-border rounded-lg p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">New book</span>
-            <button type="button" onClick={() => setShowForm(false)} className="text-muted-foreground hover:text-foreground">
-              <X size={14} />
-            </button>
-          </div>
-          <Input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
-          <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)" />
-          <LanguageSelect value={language} onValueChange={setLanguage} />
-          <div className="flex justify-end">
-            <Button type="submit" size="sm" disabled={!title.trim() || saving || saved}
-              className={saved ? "bg-green-600 hover:bg-green-600 text-white" : ""}>
-              {saved ? "Added!" : saving ? "Saving…" : "Add book"}
-            </Button>
-          </div>
-        </form>
-      )}
+      {/* Add book modal */}
+      <Dialog open={showAdd} onOpenChange={(open) => { if (!open && !saving) { setShowAdd(false); setTitle(""); setAuthor(""); setLanguage(""); setSaved(false); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add book</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddBook}>
+            <div className="space-y-3 py-1">
+              <Input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
+              <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)" />
+              <LanguageSelect value={language} onValueChange={setLanguage} />
+            </div>
+            <DialogFooter className="items-center mt-4">
+              <Button variant="outline" type="button" onClick={() => setShowAdd(false)}>Cancel</Button>
+              <Button type="submit" disabled={!title.trim() || saving || saved}
+                className={saved ? "bg-green-600 hover:bg-green-600 text-white" : ""}>
+                {saved ? "Added!" : saving ? "Saving…" : "Add book"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Book grid grouped by language */}
-      {books.length === 0 && !showForm ? (
+      {books.length === 0 ? (
         <div className="text-center py-24 text-muted-foreground">
           <p className="text-sm">No books yet.</p>
         </div>
@@ -195,7 +197,7 @@ export default function ShelfPage() {
         <div className="space-y-8">
           {groups.map(([code, groupBooks]) => (
             <div key={code}>
-              <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+              <h2 className="text-base font-medium text-muted-foreground mb-3">
                 {langLabel(code)}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -246,7 +248,7 @@ export default function ShelfPage() {
             <Input value={editAuthor} onChange={(e) => setEditAuthor(e.target.value)} placeholder="Author (optional)" />
             <LanguageSelect value={editLanguage} onValueChange={setEditLanguage} />
           </div>
-          <DialogFooter>
+          <DialogFooter className="items-center">
             <Button variant="outline" onClick={() => setEditBook(null)}>Cancel</Button>
             <Button onClick={handleEditSave} disabled={!editTitle.trim() || editSaving}>
               {editSaving ? "Saving…" : "Save"}
@@ -264,7 +266,7 @@ export default function ShelfPage() {
           <p className="text-sm text-muted-foreground">
             The book will be removed. Quotes from this book will remain but lose their source.
           </p>
-          <DialogFooter>
+          <DialogFooter className="items-center">
             <Button variant="outline" onClick={() => setDeleteBookId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? "Deleting…" : "Delete"}
