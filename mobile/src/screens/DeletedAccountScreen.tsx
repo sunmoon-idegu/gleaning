@@ -2,6 +2,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { apiFetch } from "../lib/api";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 export default function DeletedAccountScreen({ deletedAt, onRecovered }: Props) {
   const { signOut, getToken } = useAuth();
   const [recovering, setRecovering] = useState(false);
+  const { t } = useTranslation();
 
   const purgeDate = deletedAt ? new Date(deletedAt) : new Date();
   purgeDate.setDate(purgeDate.getDate() + 30);
@@ -27,7 +29,7 @@ export default function DeletedAccountScreen({ deletedAt, onRecovered }: Props) 
       await apiFetch("/users/me/recover", token, { method: "POST" });
       onRecovered();
     } catch {
-      Alert.alert("Could not recover", "The grace period may have passed, or there was a network error.");
+      Alert.alert(t("deleted.errorTitle"), t("deleted.errorMessage"));
     } finally {
       setRecovering(false);
     }
@@ -36,13 +38,8 @@ export default function DeletedAccountScreen({ deletedAt, onRecovered }: Props) 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.inner}>
-        <Text style={styles.title}>Account scheduled{"\n"}for deletion</Text>
-        <Text style={styles.body}>
-          Your account and all quotes will be permanently deleted on{" "}
-          <Text style={styles.date}>{purgeDateStr}</Text>.
-          {"\n\n"}
-          Tap below to cancel and keep your account.
-        </Text>
+        <Text style={styles.title}>{t("deleted.title")}</Text>
+        <Text style={styles.body}>{t("deleted.body", { date: purgeDateStr })}</Text>
 
         <TouchableOpacity
           style={[styles.recoverBtn, recovering && styles.disabled]}
@@ -52,12 +49,12 @@ export default function DeletedAccountScreen({ deletedAt, onRecovered }: Props) 
         >
           {recovering
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.recoverText}>Recover my account</Text>
+            : <Text style={styles.recoverText}>{t("deleted.recover")}</Text>
           }
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.signOutBtn} onPress={() => signOut()} activeOpacity={0.7}>
-          <Text style={styles.signOutText}>Sign out</Text>
+          <Text style={styles.signOutText}>{t("deleted.signOut")}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

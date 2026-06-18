@@ -35,6 +35,8 @@ class Book(Base):
     cover_url = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    __table_args__ = (UniqueConstraint("user_id", "title"),)
+
 
 class Source(Base):
     __tablename__ = "sources"

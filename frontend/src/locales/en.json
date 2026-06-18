@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "feed": "Quotes",
+    "shelf": "Shelf",
+    "search": "Search",
+    "help": "Help",
+    "feedback": "Send feedback"
+  },
+  "add": {
+    "heading": "Add quote",
+    "placeholder": "The quote…",
+    "save": "Save",
+    "saving": "Saving…",
+    "addSource": "Add source",
+    "sourceBook": "Book",
+    "sourceVideo": "Video",
+    "searchBooks": "Search books…",
+    "videoTitle": "Title (optional)",
+    "videoLink": "Link (optional)",
+    "page": "Page (optional)",
+    "savedTitle": "Saved",
+    "savedMessage": "Quote saved."
+  },
+  "feedback": {
+    "heading": "Send feedback",
+    "subtitle": "Tell us what's on your mind.",
+    "whatsMind": "What's this about?",
+    "details": "Details",
+    "detailsOptional": "(optional)",
+    "placeholder": "Tell us more...",
+    "charCount": "{{count}} / 1000",
+    "send": "Send feedback",
+    "sending": "Sending…",
+    "sendMore": "Send more",
+    "errorMessage": "Something went wrong — please try again.",
+    "thankYouTitle": "Thank you!",
+    "thankYouBody": "Your feedback has been received.",
+    "bug": "Something's broken",
+    "feature": "Feature request",
+    "unclear": "Something's unclear",
+    "love": "Love the app",
+    "other": "Other"
+  },
+  "shelf": {
+    "heading": "Shelf",
+    "addBook": "Add Book",
+    "titlePlaceholder": "Title",
+    "authorPlaceholder": "Author (optional)",
+    "languageLabel": "Language (optional)",
+    "cancel": "Cancel",
+    "add": "Add",
+    "quoteCount_one": "{{count}} quote",
+    "quoteCount_other": "{{count}} quotes"
+  },
+  "feed": {
+    "heading": "Quotes",
+    "empty": "No quotes yet."
+  },
+  "search": {
+    "heading": "Search",
+    "placeholder": "Search quotes and books…",
+    "noResults": "No results for \"{{query}}\""
+  },
+  "lang": {
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語"
+  }
+}

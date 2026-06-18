@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "feed": "語錄",
+    "shelf": "書架",
+    "search": "搜尋",
+    "help": "說明",
+    "feedback": "傳送意見回饋"
+  },
+  "add": {
+    "heading": "新增摘錄",
+    "placeholder": "摘錄內容…",
+    "save": "儲存",
+    "saving": "儲存中…",
+    "addSource": "新增來源",
+    "sourceBook": "書籍",
+    "sourceVideo": "影片",
+    "searchBooks": "搜尋書籍…",
+    "videoTitle": "標題（選填）",
+    "videoLink": "連結（選填）",
+    "page": "頁碼（選填）",
+    "savedTitle": "已儲存",
+    "savedMessage": "摘錄已儲存。"
+  },
+  "feedback": {
+    "heading": "傳送意見回饋",
+    "subtitle": "您想說什麼？",
+    "whatsMind": "這是關於什麼的？",
+    "details": "詳細內容",
+    "detailsOptional": "（選填）",
+    "placeholder": "告訴我們更多…",
+    "charCount": "{{count}} / 1000",
+    "send": "傳送意見回饋",
+    "sending": "傳送中…",
+    "sendMore": "繼續回饋",
+    "errorMessage": "出現錯誤，請重試。",
+    "thankYouTitle": "謝謝！",
+    "thankYouBody": "您的意見回饋已收到。",
+    "bug": "出了點問題",
+    "feature": "功能請求",
+    "unclear": "有些不清楚",
+    "love": "很喜歡這個應用程式",
+    "other": "其他"
+  },
+  "shelf": {
+    "heading": "書架",
+    "addBook": "新增書籍",
+    "titlePlaceholder": "書名",
+    "authorPlaceholder": "作者（選填）",
+    "languageLabel": "語言（選填）",
+    "cancel": "取消",
+    "add": "新增",
+    "quoteCount_one": "{{count}} 條摘錄",
+    "quoteCount_other": "{{count}} 條摘錄"
+  },
+  "feed": {
+    "heading": "語錄",
+    "empty": "還沒有摘錄。"
+  },
+  "search": {
+    "heading": "搜尋",
+    "placeholder": "搜尋摘錄和書籍…",
+    "noResults": "「{{query}}」暫無結果"
+  },
+  "lang": {
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語"
+  }
+}

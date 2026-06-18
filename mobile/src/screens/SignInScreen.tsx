@@ -1,10 +1,12 @@
 import { useOAuth } from "@clerk/clerk-expo";
 import { Text, TouchableOpacity, View, StyleSheet, ActivityIndicator } from "react-native";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function SignInScreen() {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   async function handleSignIn() {
     setLoading(true);
@@ -23,12 +25,12 @@ export default function SignInScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Gleaning</Text>
-      <Text style={styles.subtitle}>Capture what's worth keeping.</Text>
+      <Text style={styles.subtitle}>{t("signIn.subtitle")}</Text>
       <TouchableOpacity style={styles.button} onPress={handleSignIn} disabled={loading}>
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Sign in with Google</Text>
+          <Text style={styles.buttonText}>{t("signIn.button")}</Text>
         )}
       </TouchableOpacity>
     </View>

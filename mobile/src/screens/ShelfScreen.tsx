@@ -1,16 +1,22 @@
 import { useAuth } from "@clerk/clerk-expo";
 import Feather from "@expo/vector-icons/Feather";
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import {
+  Animated,
   ActivityIndicator,
   Alert,
+  Easing,
   Modal,
+  PanResponder,
   Pressable,
   SectionList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -55,9 +61,13 @@ function groupByLanguage(books: Book[]): { title: string; data: Book[] }[] {
 export default function ShelfScreen() {
   const { getToken } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { width } = useWindowDimensions();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const slideAnim = useRef(new Animated.Value(width)).current;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -76,7 +86,49 @@ export default function ShelfScreen() {
     }
   }
 
-  useEffect(() => { loadBooks(); }, []);
+  useFocusEffect(useCallback(() => { loadBooks(); }, []));
+
+  function openDetail(bookId: string) {
+    setSelectedBookId(bookId);
+    setShowDetail(true);
+    slideAnim.setValue(width);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }
+
+  function closeDetail() {
+    Animated.timing(slideAnim, {
+      toValue: width,
+      duration: 260,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      setShowDetail(false);
+      setSelectedBookId(null);
+      slideAnim.setValue(width);
+    });
+  }
+
+  const swipeResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, gs) =>
+        (gs.moveX - gs.dx) < width * 0.35 && Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
+      onPanResponderMove: (_e, gs) => {
+        if (gs.dx > 0) slideAnim.setValue(gs.dx);
+      },
+      onPanResponderRelease: (_e, gs) => {
+        if (gs.dx > width * 0.45 || gs.vx > 0.8) {
+          closeDetail();
+        } else {
+          Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
 
   async function handleAddBook() {
     if (!newTitle.trim() || saving) return;
@@ -96,18 +148,10 @@ export default function ShelfScreen() {
       setShowAddModal(false);
       setNewTitle(""); setNewAuthor(""); setNewLang("");
     } catch {
-      Alert.alert("Error", "Could not add book. Try again.");
+      Alert.alert(t("add.errorTitle"), t("shelf.couldNotAdd"));
     } finally {
       setSaving(false);
     }
-  }
-
-  if (selectedBookId) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
-        <BookDetail bookId={selectedBookId} onBack={() => setSelectedBookId(null)} />
-      </SafeAreaView>
-    );
   }
 
   if (loading) {
@@ -119,131 +163,153 @@ export default function ShelfScreen() {
   }
 
   const sections = groupByLanguage(books);
+  const panHandlers = swipeResponder.panHandlers;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
-      <View style={styles.headerRow}>
-        <Text style={[styles.heading, { color: colors.fg }]}>Shelf</Text>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: colors.muted }]}
-          onPress={() => setShowAddModal(true)}
-          activeOpacity={0.7}
-        >
-          <Feather name="plus" size={18} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
+        <View style={styles.headerRow}>
+          <Text style={[styles.heading, { color: colors.fg }]}>{t("shelf.heading")}</Text>
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: colors.muted }]}
+            onPress={() => setShowAddModal(true)}
+            activeOpacity={0.7}
+          >
+            <Feather name="plus" size={18} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
 
-      <SectionList
-        sections={sections}
-        keyExtractor={(b) => b.id}
-        contentContainerStyle={books.length === 0 ? styles.emptyContainer : styles.list}
-        renderSectionHeader={({ section }) => (
-          <View style={[styles.sectionHeaderWrap, { borderTopColor: colors.border, backgroundColor: colors.bg }]}>
-            <Text style={[styles.sectionHeader, { color: colors.fg }]}>{section.title}</Text>
-          </View>
-        )}
-        renderItem={({ item, index, section }) => {
-          const isLast = index === section.data.length - 1;
-          return (
-            <TouchableOpacity
-              style={[styles.row, { borderBottomColor: isLast ? "transparent" : colors.border }]}
-              onPress={() => setSelectedBookId(item.id)}
-              activeOpacity={0.6}
-            >
-              <View style={styles.rowContent}>
-                <Text style={[styles.title, { color: colors.fg }]} numberOfLines={2}>
-                  {item.title}
-                </Text>
-                {item.author && (
-                  <Text style={[styles.author, { color: colors.mutedFg }]} numberOfLines={1}>
-                    {item.author}
+        <SectionList
+          sections={sections}
+          keyExtractor={(b) => b.id}
+          contentContainerStyle={books.length === 0 ? styles.emptyContainer : styles.list}
+          renderSectionHeader={({ section }) => (
+            <View style={[styles.sectionHeaderWrap, { borderTopColor: colors.border, backgroundColor: colors.bg }]}>
+              <Text style={[styles.sectionHeader, { color: colors.fg }]}>{section.title}</Text>
+            </View>
+          )}
+          renderItem={({ item, index, section }) => {
+            const isLast = index === section.data.length - 1;
+            return (
+              <TouchableOpacity
+                style={[styles.row, { borderBottomColor: isLast ? "transparent" : colors.border }]}
+                onPress={() => openDetail(item.id)}
+                activeOpacity={0.6}
+              >
+                <View style={styles.rowContent}>
+                  <Text style={[styles.title, { color: colors.fg }]} numberOfLines={2}>
+                    {item.title}
                   </Text>
-                )}
-              </View>
-              <Text style={[styles.chevron, { color: colors.mutedFg }]}>›</Text>
-            </TouchableOpacity>
-          );
-        }}
-        ListEmptyComponent={
-          <Text style={[styles.empty, { color: colors.mutedFg }]}>
-            No books yet. Tap + to add one.
-          </Text>
-        }
-        stickySectionHeadersEnabled={false}
-      />
-
-      <Modal
-        visible={showAddModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowAddModal(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => { setShowAddModal(false); setNewTitle(""); setNewAuthor(""); setNewLang(""); }}>
-          <Pressable style={[styles.modalContent, { backgroundColor: colors.cardBg }]}>
-            <Text style={[styles.modalTitle, { color: colors.fg }]}>Add Book</Text>
-            <TextInput
-              style={[styles.modalInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.bg }]}
-              value={newTitle}
-              onChangeText={setNewTitle}
-              placeholder="Title *"
-              placeholderTextColor={colors.mutedFg}
-              autoFocus
-            />
-            <TextInput
-              style={[styles.modalInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.bg }]}
-              value={newAuthor}
-              onChangeText={setNewAuthor}
-              placeholder="Author (optional)"
-              placeholderTextColor={colors.mutedFg}
-            />
-            <Text style={[styles.modalLabel, { color: colors.mutedFg }]}>Language (optional)</Text>
-            <View style={styles.langRow}>
-              {LANG_OPTIONS.map((opt) => {
-                const active = newLang === opt.code;
-                return (
-                  <TouchableOpacity
-                    key={opt.code}
-                    style={[
-                      styles.langChip,
-                      { borderColor: active ? colors.primary : colors.border },
-                      active && { backgroundColor: colors.primary },
-                    ]}
-                    onPress={() => setNewLang(active ? "" : opt.code)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.langChipText, { color: active ? colors.primaryFg : colors.mutedFg }]}>
-                      {opt.label}
+                  {item.author && (
+                    <Text style={[styles.author, { color: colors.mutedFg }]} numberOfLines={1}>
+                      {item.author}
                     </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalBtnCancel, { borderColor: colors.border }]}
-                onPress={() => { setShowAddModal(false); setNewTitle(""); setNewAuthor(""); setNewLang(""); }}
-              >
-                <Text style={[styles.modalBtnText, { color: colors.mutedFg }]}>Cancel</Text>
+                  )}
+                </View>
+                <Text style={[styles.chevron, { color: colors.mutedFg }]}>›</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: colors.primary }, (!newTitle.trim() || saving) && styles.modalBtnDisabled]}
-                onPress={handleAddBook}
-                disabled={!newTitle.trim() || saving}
-              >
-                {saving
-                  ? <ActivityIndicator size="small" color={colors.primaryFg} />
-                  : <Text style={[styles.modalBtnText, { color: colors.primaryFg }]}>Add</Text>
-                }
-              </TouchableOpacity>
-            </View>
+            );
+          }}
+          ListEmptyComponent={
+            <Text style={[styles.empty, { color: colors.mutedFg }]}>
+              {t("shelf.empty")}
+            </Text>
+          }
+          stickySectionHeadersEnabled={false}
+        />
+
+        <Modal
+          visible={showAddModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowAddModal(false)}
+        >
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => { setShowAddModal(false); setNewTitle(""); setNewAuthor(""); setNewLang(""); }}
+          >
+            <Pressable style={[styles.modalContent, { backgroundColor: colors.cardBg }]}>
+              <Text style={[styles.modalTitle, { color: colors.fg }]}>{t("shelf.addBook")}</Text>
+              <TextInput
+                style={[styles.modalInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.bg }]}
+                value={newTitle}
+                onChangeText={setNewTitle}
+                placeholder={t("shelf.titlePlaceholder")}
+                placeholderTextColor={colors.mutedFg}
+                autoFocus
+              />
+              <TextInput
+                style={[styles.modalInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.bg }]}
+                value={newAuthor}
+                onChangeText={setNewAuthor}
+                placeholder={t("shelf.authorPlaceholder")}
+                placeholderTextColor={colors.mutedFg}
+              />
+              <Text style={[styles.modalLabel, { color: colors.mutedFg }]}>{t("shelf.languageLabel")}</Text>
+              <View style={styles.langRow}>
+                {LANG_OPTIONS.map((opt) => {
+                  const active = newLang === opt.code;
+                  return (
+                    <TouchableOpacity
+                      key={opt.code}
+                      style={[
+                        styles.langChip,
+                        { borderColor: active ? colors.primary : colors.border },
+                        active && { backgroundColor: colors.primary },
+                      ]}
+                      onPress={() => setNewLang(active ? "" : opt.code)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.langChipText, { color: active ? colors.primaryFg : colors.mutedFg }]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View style={styles.modalBtns}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.modalBtnCancel, { borderColor: colors.border }]}
+                  onPress={() => { setShowAddModal(false); setNewTitle(""); setNewAuthor(""); setNewLang(""); }}
+                >
+                  <Text style={[styles.modalBtnText, { color: colors.mutedFg }]}>{t("settings.cancel")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: colors.primary }, (!newTitle.trim() || saving) && styles.modalBtnDisabled]}
+                  onPress={handleAddBook}
+                  disabled={!newTitle.trim() || saving}
+                >
+                  {saving
+                    ? <ActivityIndicator size="small" color={colors.primaryFg} />
+                    : <Text style={[styles.modalBtnText, { color: colors.primaryFg }]}>{t("common.add")}</Text>
+                  }
+                </TouchableOpacity>
+              </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+
+      {showDetail && selectedBookId && (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { transform: [{ translateX: slideAnim }] }]}
+          {...panHandlers}
+        >
+          <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
+            <BookDetail
+            bookId={selectedBookId}
+            onBack={closeDetail}
+            onDelete={() => setBooks(prev => prev.filter(b => b.id !== selectedBookId))}
+          />
+          </SafeAreaView>
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   container: { flex: 1 },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
   heading: { fontSize: 22, fontWeight: "600" },

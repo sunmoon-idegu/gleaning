@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "feed": "語録",
+    "shelf": "本棚",
+    "search": "検索",
+    "help": "ヘルプ",
+    "feedback": "フィードバックを送る"
+  },
+  "add": {
+    "heading": "引用を追加",
+    "placeholder": "引用文…",
+    "save": "保存",
+    "saving": "保存中…",
+    "addSource": "出典を追加",
+    "sourceBook": "本",
+    "sourceVideo": "動画",
+    "searchBooks": "本を検索…",
+    "videoTitle": "タイトル（任意）",
+    "videoLink": "リンク（任意）",
+    "page": "ページ（任意）",
+    "savedTitle": "保存しました",
+    "savedMessage": "引用を保存しました。"
+  },
+  "feedback": {
+    "heading": "フィードバックを送る",
+    "subtitle": "どんなことでも教えてください。",
+    "whatsMind": "何についてですか？",
+    "details": "詳細",
+    "detailsOptional": "（任意）",
+    "placeholder": "詳しく教えてください…",
+    "charCount": "{{count}} / 1000",
+    "send": "フィードバックを送る",
+    "sending": "送信中…",
+    "sendMore": "続けて送る",
+    "errorMessage": "エラーが発生しました。再試行してください。",
+    "thankYouTitle": "ありがとうございます！",
+    "thankYouBody": "フィードバックを受け取りました。",
+    "bug": "バグの報告",
+    "feature": "機能リクエスト",
+    "unclear": "わかりにくい点がある",
+    "love": "アプリが好き",
+    "other": "その他"
+  },
+  "shelf": {
+    "heading": "本棚",
+    "addBook": "本を追加",
+    "titlePlaceholder": "タイトル",
+    "authorPlaceholder": "著者（任意）",
+    "languageLabel": "言語（任意）",
+    "cancel": "キャンセル",
+    "add": "追加",
+    "quoteCount_one": "{{count}} 件",
+    "quoteCount_other": "{{count}} 件"
+  },
+  "feed": {
+    "heading": "語録",
+    "empty": "まだ引用がありません。"
+  },
+  "search": {
+    "heading": "検索",
+    "placeholder": "引用や本を検索…",
+    "noResults": "「{{query}}」の結果はありません"
+  },
+  "lang": {
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語"
+  }
+}

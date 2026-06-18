@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Lora, Noto_Serif_SC } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
+import { I18nProvider } from "@/components/i18n-provider";
 import "./globals.css";
 
 const lora = Lora({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -25,7 +26,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning className={`${lora.variable} ${notoSerifSC.variable}`}>
         <body className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans antialiased">
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider><I18nProvider>{children}</I18nProvider></ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

@@ -1,11 +1,14 @@
 import { useAuth } from "@clerk/clerk-expo";
 import Feather from "@expo/vector-icons/Feather";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import {
   Animated,
   ActivityIndicator,
   Easing,
   FlatList,
+  PanResponder,
   RefreshControl,
   StyleSheet,
   Text,
@@ -23,7 +26,6 @@ function sourceLabel(quote: Quote): string | null {
   if (!s) return null;
   if (s.type === "book" && s.book) return s.book.title;
   if (s.type === "video") return s.title;
-  if (s.type === "live") return s.author ? `Live · ${s.author}` : "Live";
   return null;
 }
 
@@ -102,6 +104,7 @@ function CardQuoteItem({
 export default function FeedScreen() {
   const { getToken } = useAuth();
   const { colors, feedMode, setFeedMode, sortOrder, appFontSize } = useTheme();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +156,23 @@ export default function FeedScreen() {
     });
   }
 
+  const swipeResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, gs) =>
+        (gs.moveX - gs.dx) < width * 0.35 && Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
+      onPanResponderMove: (_e, gs) => {
+        if (gs.dx > 0) slideAnim.setValue(gs.dx);
+      },
+      onPanResponderRelease: (_e, gs) => {
+        if (gs.dx > width * 0.45 || gs.vx > 0.8) {
+          closeDetail();
+        } else {
+          Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
+
   async function load(refresh = false) {
     try {
       refresh ? setRefreshing(true) : setLoading(true);
@@ -168,7 +188,7 @@ export default function FeedScreen() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useFocusEffect(useCallback(() => { load(); }, []));
   const onRefresh = useCallback(() => load(true), []);
 
   if (loading) {
@@ -182,9 +202,9 @@ export default function FeedScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]} edges={["top"]}>
-        <Text style={[styles.errorText, { color: colors.mutedFg }]}>Failed to load quotes.</Text>
+        <Text style={[styles.errorText, { color: colors.mutedFg }]}>{t("feed.error")}</Text>
         <TouchableOpacity onPress={() => load()}>
-          <Text style={[styles.retry, { color: colors.fg }]}>Retry</Text>
+          <Text style={[styles.retry, { color: colors.fg }]}>{t("feed.retry")}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -198,7 +218,7 @@ export default function FeedScreen() {
         {feedMode === "card" ? (
           <>
             <View style={styles.listHeader}>
-              <Text style={[styles.heading, { color: colors.fg }]}>Feed</Text>
+              <Text style={[styles.heading, { color: colors.fg }]}>{t("feed.heading")}</Text>
               <TouchableOpacity onPress={() => setFeedMode("list")} hitSlop={12}>
                 <Feather name="list" size={20} color={colors.fg} />
               </TouchableOpacity>
@@ -218,7 +238,7 @@ export default function FeedScreen() {
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.mutedFg} />}
               ListEmptyComponent={
                 <View style={[styles.cardEmpty, { width }]}>
-                  <Text style={[styles.empty, { color: colors.mutedFg }]}>No quotes yet. Add your first one!</Text>
+                  <Text style={[styles.empty, { color: colors.mutedFg }]}>{t("feed.empty")}</Text>
                 </View>
               }
             />
@@ -231,7 +251,7 @@ export default function FeedScreen() {
         ) : (
           <>
             <View style={styles.listHeader}>
-              <Text style={[styles.heading, { color: colors.fg }]}>Feed</Text>
+              <Text style={[styles.heading, { color: colors.fg }]}>{t("feed.heading")}</Text>
               <TouchableOpacity onPress={() => setFeedMode("card")} hitSlop={12}>
                 <Feather name="grid" size={20} color={colors.fg} />
               </TouchableOpacity>
@@ -245,7 +265,7 @@ export default function FeedScreen() {
               )}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.mutedFg} />}
               ListEmptyComponent={
-                <Text style={[styles.empty, { color: colors.mutedFg }]}>No quotes yet. Add your first one!</Text>
+                <Text style={[styles.empty, { color: colors.mutedFg }]}>{t("feed.empty")}</Text>
               }
               contentContainerStyle={quotes.length === 0 ? styles.emptyContainer : styles.list}
             />
@@ -257,9 +277,14 @@ export default function FeedScreen() {
       {showDetail && selectedQuote && (
         <Animated.View
           style={[StyleSheet.absoluteFill, { transform: [{ translateX: slideAnim }] }]}
+          {...swipeResponder.panHandlers}
         >
           <SafeAreaView style={[styles.fill, { backgroundColor: colors.bg }]} edges={["top"]}>
-            <QuoteDetailScreen quote={selectedQuote} onBack={closeDetail} />
+            <QuoteDetailScreen
+              quote={selectedQuote}
+              onBack={closeDetail}
+              onDelete={() => setQuotes(prev => prev.filter(q => q.id !== selectedQuote.id))}
+            />
           </SafeAreaView>
         </Animated.View>
       )}

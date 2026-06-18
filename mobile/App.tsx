@@ -1,9 +1,11 @@
+import "./src/i18n";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text, TouchableOpacity, StyleSheet, ActivityIndicator, View } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { tokenCache } from "./src/tokenCache";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { registerDeletedHandler } from "./src/lib/api";
@@ -18,21 +20,24 @@ import DeletedAccountScreen from "./src/screens/DeletedAccountScreen";
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const Tab = createBottomTabNavigator();
 
-function AddButton({ onPress }: { onPress: () => void }) {
+function AddButton({ onPress, style }: { onPress: () => void; style?: object }) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity
-      style={[styles.addBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+      style={[style, styles.addBtnOuter]}
       onPress={onPress}
       activeOpacity={0.85}
     >
-      <Feather name="plus" size={24} color={colors.primaryFg} />
+      <View style={[styles.addBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
+        <Feather name="plus" size={24} color={colors.primaryFg} />
+      </View>
     </TouchableOpacity>
   );
 }
 
 function AppTabs() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <NavigationContainer>
@@ -54,7 +59,7 @@ function AppTabs() {
         <Tab.Screen
           name="Feed"
           component={FeedScreen}
-          options={{ tabBarIcon: ({ color, focused }) => (
+          options={{ tabBarLabel: t("tabs.feed"), tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIcon, focused && { backgroundColor: color + "22" }]}>
               <Feather name="list" size={20} color={color} />
             </View>
@@ -63,7 +68,7 @@ function AppTabs() {
         <Tab.Screen
           name="Shelf"
           component={ShelfScreen}
-          options={{ tabBarIcon: ({ color, focused }) => (
+          options={{ tabBarLabel: t("tabs.shelf"), tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIcon, focused && { backgroundColor: color + "22" }]}>
               <Feather name="book-open" size={20} color={color} />
             </View>
@@ -75,13 +80,13 @@ function AppTabs() {
           options={{
             tabBarLabel: () => null,
             tabBarIcon: () => null,
-            tabBarButton: (props) => <AddButton onPress={() => props.onPress?.()} />,
+            tabBarButton: (props) => <AddButton onPress={() => props.onPress?.({} as never)} style={props.style as object} />,
           }}
         />
         <Tab.Screen
           name="Search"
           component={SearchScreen}
-          options={{ tabBarIcon: ({ color, focused }) => (
+          options={{ tabBarLabel: t("tabs.search"), tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIcon, focused && { backgroundColor: color + "22" }]}>
               <Feather name="search" size={20} color={color} />
             </View>
@@ -90,7 +95,7 @@ function AppTabs() {
         <Tab.Screen
           name="Settings"
           component={SettingsScreen}
-          options={{ tabBarIcon: ({ color, focused }) => (
+          options={{ tabBarLabel: t("tabs.settings"), tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIcon, focused && { backgroundColor: color + "22" }]}>
               <Feather name="settings" size={20} color={color} />
             </View>
@@ -156,13 +161,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  addBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  addBtnOuter: {
+    flex: 1,
+    alignSelf: "stretch",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+  },
+  addBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,

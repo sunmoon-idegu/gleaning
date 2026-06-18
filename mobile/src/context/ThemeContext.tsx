@@ -3,11 +3,13 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useColorScheme } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { apiFetch } from "../lib/api";
+import i18n, { type AppLanguage } from "../i18n";
 
 export type ThemeMode = "light" | "dark" | "colorful";
 export type FeedMode = "list" | "card";
 export type SortOrder = "newest" | "oldest" | "random";
 export type AppFontSize = "small" | "medium" | "large";
+export type { AppLanguage };
 
 export interface ThemeColors {
   bg: string;
@@ -53,12 +55,14 @@ const THEME_KEY     = "gleaning_theme";
 const FEED_MODE_KEY = "gleaning_feed_mode";
 const SORT_KEY      = "gleaning_sort_order";
 const FONT_KEY      = "gleaning_font_size";
+const LANG_KEY      = "gleaning_language";
 
 interface ApiPrefs {
   theme?: string;
   feed_mode?: string;
   sort_order?: string;
   font_size?: string;
+  language?: string;
 }
 
 interface ThemeContextValue {
@@ -72,6 +76,8 @@ interface ThemeContextValue {
   setSortOrder: (s: SortOrder) => void;
   appFontSize: AppFontSize;
   setAppFontSize: (f: AppFontSize) => void;
+  language: AppLanguage;
+  setLanguage: (l: AppLanguage) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -79,6 +85,7 @@ const ThemeContext = createContext<ThemeContextValue>({
   feedMode: "list", setFeedMode: () => {},
   sortOrder: "newest", setSortOrder: () => {},
   appFontSize: "medium", setAppFontSize: () => {},
+  language: "en", setLanguage: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -89,6 +96,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [feedMode, setFeedModeState] = useState<FeedMode>("list");
   const [sortOrder, setSortOrderState] = useState<SortOrder>("newest");
   const [appFontSize, setAppFontSizeState] = useState<AppFontSize>("medium");
+  const [language, setLanguageState] = useState<AppLanguage>(i18n.language as AppLanguage);
 
   // Debounce PATCH calls so rapid changes (e.g., tapping font size quickly) batch into one request
   const patchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,6 +107,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (prefs.feed_mode === "list" || prefs.feed_mode === "card") setFeedModeState(prefs.feed_mode);
     if (prefs.sort_order === "newest" || prefs.sort_order === "oldest" || prefs.sort_order === "random") setSortOrderState(prefs.sort_order);
     if (prefs.font_size === "small" || prefs.font_size === "medium" || prefs.font_size === "large") setAppFontSizeState(prefs.font_size);
+    if (prefs.language === "en" || prefs.language === "zh" || prefs.language === "ja") {
+      setLanguageState(prefs.language);
+      i18n.changeLanguage(prefs.language);
+    }
   }
 
   // On sign-in: load from API first, fall back to SecureStore while request is in flight
@@ -111,8 +123,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       SecureStore.getItemAsync(FEED_MODE_KEY),
       SecureStore.getItemAsync(SORT_KEY),
       SecureStore.getItemAsync(FONT_KEY),
-    ]).then(([t, fm, so, fs]) => {
-      applyPrefs({ theme: t ?? undefined, feed_mode: fm ?? undefined, sort_order: so ?? undefined, font_size: fs ?? undefined });
+      SecureStore.getItemAsync(LANG_KEY),
+    ]).then(([t, fm, so, fs, lang]) => {
+      applyPrefs({ theme: t ?? undefined, feed_mode: fm ?? undefined, sort_order: so ?? undefined, font_size: fs ?? undefined, language: lang ?? undefined });
     });
 
     // Then override with authoritative server values
@@ -125,6 +138,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (prefs.feed_mode)  SecureStore.setItemAsync(FEED_MODE_KEY, prefs.feed_mode);
         if (prefs.sort_order) SecureStore.setItemAsync(SORT_KEY, prefs.sort_order);
         if (prefs.font_size)  SecureStore.setItemAsync(FONT_KEY, prefs.font_size);
+        if (prefs.language)   SecureStore.setItemAsync(LANG_KEY, prefs.language);
       }).catch(() => {}); // network failure — local cache already applied
     });
   }, [isSignedIn]);
@@ -135,6 +149,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (patch.feed_mode)  SecureStore.setItemAsync(FEED_MODE_KEY, patch.feed_mode);
     if (patch.sort_order) SecureStore.setItemAsync(SORT_KEY, patch.sort_order);
     if (patch.font_size)  SecureStore.setItemAsync(FONT_KEY, patch.font_size);
+    if (patch.language)   SecureStore.setItemAsync(LANG_KEY, patch.language);
 
     // API — debounced 600ms
     pendingPatch.current = { ...pendingPatch.current, ...patch };
@@ -160,6 +175,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setFeedMode = (m: FeedMode) => { setFeedModeState(m); persistPatch({ feed_mode: m }); };
   const setSortOrder = (s: SortOrder) => { setSortOrderState(s); persistPatch({ sort_order: s }); };
   const setAppFontSize = (f: AppFontSize) => { setAppFontSizeState(f); persistPatch({ font_size: f }); };
+  const setLanguage = (l: AppLanguage) => {
+    setLanguageState(l);
+    i18n.changeLanguage(l);
+    persistPatch({ language: l });
+  };
 
   return (
     <ThemeContext.Provider value={{
@@ -167,6 +187,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       feedMode, setFeedMode,
       sortOrder, setSortOrder,
       appFontSize, setAppFontSize,
+      language, setLanguage,
     }}>
       {children}
     </ThemeContext.Provider>

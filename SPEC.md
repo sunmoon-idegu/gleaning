@@ -280,9 +280,9 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 
 ---
 
-## Open Questions
+## Decisions
 
-- [ ] Should books have genres/categories?
-- [ ] Should quotes support images (e.g., a photo of the page)?
-- [ ] What happens when the same book has multiple editions with different page numbers?
-- [ ] Should tags be free-form or from a fixed list?
+- [x] Books do not have genres or categories.
+- [x] Quotes do not support images.
+- [x] Multiple editions with different page numbers are out of scope — page numbers are best-effort metadata only.
+- [x] Tags are out of scope for now. May be added in a future version.

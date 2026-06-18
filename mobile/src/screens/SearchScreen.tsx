@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   FlatList,
@@ -15,6 +16,7 @@ import { useTheme } from "../context/ThemeContext";
 export default function SearchScreen() {
   const { getToken } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,14 +38,14 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
-      <Text style={[styles.heading, { color: colors.fg }]}>Search</Text>
+      <Text style={[styles.heading, { color: colors.fg }]}>{t("search.heading")}</Text>
       <View style={styles.searchRow}>
         <TextInput
           style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={search}
-          placeholder="Search quotes, books, tags…"
+          placeholder={t("search.placeholder")}
           placeholderTextColor={colors.mutedFg}
           returnKeyType="search"
           autoCapitalize="none"
@@ -66,7 +68,7 @@ export default function SearchScreen() {
           )}
           ListEmptyComponent={
             searched ? (
-              <Text style={[styles.empty, { color: colors.mutedFg }]}>No results for "{query}"</Text>
+              <Text style={[styles.empty, { color: colors.mutedFg }]}>{t("search.noResults", { query })}</Text>
             ) : null
           }
         />

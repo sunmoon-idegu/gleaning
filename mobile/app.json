@@ -25,7 +25,8 @@
           "photosPermission": "Used to pick a photo of a page to extract a quote.",
           "cameraPermission": "Used to take a photo of a page to extract a quote."
         }
-      ]
+      ],
+      "expo-localization"
     ]
   }
 }

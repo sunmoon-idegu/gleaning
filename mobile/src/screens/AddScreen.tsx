@@ -2,6 +2,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import * as ImagePicker from "expo-image-picker";
 import Feather from "@expo/vector-icons/Feather";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -20,12 +21,19 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { apiFetch, type Book, type Quote } from "../lib/api";
+import { apiFetch, ApiError, type Book, type Quote } from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL!;
 const CORNER_HIT = 26;
 const HANDLE_SIZE = 13;
+
+function detectLang(text: string): "en" | "zh" | "ja" | null {
+  if (/[぀-ゟ゠-ヿ]/.test(text)) return "ja";
+  if (/[一-鿿㐀-䶿]/.test(text)) return "zh";
+  if (/[a-zA-Z]/.test(text)) return "en";
+  return null;
+}
 
 type SourceType = "book" | "video" | null;
 
@@ -63,6 +71,7 @@ function toNormalized(
 export default function AddScreen({ onAdded }: AddScreenProps) {
   const { getToken } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation();
 
   const [text, setText] = useState("");
@@ -71,7 +80,6 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
   const [books, setBooks] = useState<Book[]>([]);
   const [bookSearch, setBookSearch] = useState("");
   const [bookId, setBookId] = useState("");
-  const [creatingBook, setCreatingBook] = useState(false);
   const [page, setPage] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -193,13 +201,13 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
     if (fromCamera) {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission required", "Camera access is needed to take photos.");
+        Alert.alert(t("add.permissionRequired"), t("add.permissionCamera"));
         return;
       }
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission required", "Photo library access is needed.");
+        Alert.alert(t("add.permissionRequired"), t("add.permissionLibrary"));
         return;
       }
     }
@@ -252,29 +260,9 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
     } catch (err: unknown) {
       clearTimeout(timeout);
       const isTimeout = err instanceof Error && err.name === "AbortError";
-      Alert.alert("Error", isTimeout ? "Request timed out. Try again." : "Could not extract text. Try again.");
+      Alert.alert(t("add.errorTitle"), isTimeout ? t("add.timedOut") : t("add.couldNotExtract"));
     } finally {
       setExtracting(false);
-    }
-  }
-
-  async function handleCreateBook() {
-    if (creatingBook || !bookSearch.trim()) return;
-    setCreatingBook(true);
-    try {
-      const token = await getToken();
-      if (!token) throw new Error("No token");
-      const newBook = await apiFetch<Book>("/books", token, {
-        method: "POST",
-        body: JSON.stringify({ title: bookSearch.trim() }),
-      });
-      setBooks((prev) => [...prev, newBook]);
-      setBookId(newBook.id);
-      setBookSearch(newBook.title);
-    } catch {
-      Alert.alert("Error", "Could not create book. Try again.");
-    } finally {
-      setCreatingBook(false);
     }
   }
 
@@ -287,10 +275,29 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
 
       let sourceId: string | null = null;
 
-      if (sourceType === "book" && bookId) {
+      if (sourceType === "book" && bookSearch.trim()) {
+        let resolvedBookId = bookId;
+        if (!resolvedBookId) {
+          try {
+            const newBook = await apiFetch<Book>("/books", token, {
+              method: "POST",
+              body: JSON.stringify({ title: bookSearch.trim(), language: detectLang(bookSearch.trim()) }),
+            });
+            setBooks((prev) => [...prev, newBook]);
+            resolvedBookId = newBook.id;
+          } catch (err) {
+            if (err instanceof ApiError && err.status === 409) {
+              const existing = books.find(
+                (b) => b.title.toLowerCase() === bookSearch.trim().toLowerCase()
+              );
+              if (existing) resolvedBookId = existing.id;
+            }
+            if (!resolvedBookId) throw err;
+          }
+        }
         const src = await apiFetch<{ id: string }>("/sources", token, {
           method: "POST",
-          body: JSON.stringify({ type: "book", book_id: bookId }),
+          body: JSON.stringify({ type: "book", book_id: resolvedBookId }),
         });
         sourceId = src.id;
       } else if (sourceType === "video" && (videoTitle || videoUrl)) {
@@ -313,27 +320,24 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
 
       setText(""); setSourceType(null); setSourceOpen(false);
       setBookSearch(""); setBookId(""); setPage(""); setVideoTitle(""); setVideoUrl("");
-      setTags([]); setTagInput("");
       onAdded?.();
-      Alert.alert("Saved", "Quote saved to Gleaning.", [
-        { text: "OK", onPress: () => navigation.navigate("Feed" as never) },
-      ]);
+      navigation.navigate("Feed" as never);
     } catch {
-      Alert.alert("Error", "Could not save quote. Try again.");
+      Alert.alert(t("add.errorTitle"), t("add.couldNotSave"));
     } finally {
       setSaving(false);
     }
   }
 
   const sourceTypes: { value: SourceType; label: string }[] = [
-    { value: "book", label: "Book" },
-    { value: "video", label: "Video" },
+    { value: "book", label: t("add.sourceBook") },
+    { value: "video", label: t("add.sourceVideo") },
   ];
 
   const sourceCollapsedLabel = (() => {
     if (!sourceType) return null;
     if (sourceType === "book" && bookSearch) return bookSearch;
-    if (sourceType === "video") return videoTitle || videoUrl || "Video";
+    if (sourceType === "video") return videoTitle || videoUrl || t("add.sourceVideo");
     return null;
   })();
 
@@ -349,7 +353,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={[styles.heading, { color: colors.fg }]}>Add quote</Text>
+          <Text style={[styles.heading, { color: colors.fg }]}>{t("add.heading")}</Text>
 
           {/* Capture buttons */}
           <View style={styles.captureRow}>
@@ -358,14 +362,14 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
               onPress={() => captureFromImage(true)}
               disabled={extracting}
             >
-              <Text style={[styles.captureBtnText, { color: colors.mutedFg }]}>📷 Camera</Text>
+              <Text style={[styles.captureBtnText, { color: colors.mutedFg }]}>{t("add.camera")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.captureBtn, { borderColor: colors.border }]}
               onPress={() => captureFromImage(false)}
               disabled={extracting}
             >
-              <Text style={[styles.captureBtnText, { color: colors.mutedFg }]}>🖼 Library</Text>
+              <Text style={[styles.captureBtnText, { color: colors.mutedFg }]}>{t("add.library")}</Text>
             </TouchableOpacity>
             {extracting && <ActivityIndicator color={colors.primary} />}
           </View>
@@ -376,7 +380,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
             value={text}
             onChangeText={setText}
             multiline
-            placeholder="The quote…"
+            placeholder={t("add.placeholder")}
             placeholderTextColor={colors.mutedFg}
             autoFocus={false}
           />
@@ -393,7 +397,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
           >
             {saving
               ? <ActivityIndicator color={colors.primaryFg} />
-              : <Text style={[styles.saveBtnText, { color: colors.primaryFg }]}>Save</Text>
+              : <Text style={[styles.saveBtnText, { color: colors.primaryFg }]}>{t("add.save")}</Text>
             }
           </TouchableOpacity>
 
@@ -407,7 +411,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
               style={[styles.collapseLabel, { color: sourceCollapsedLabel ? colors.fg : colors.mutedFg }]}
               numberOfLines={1}
             >
-              {sourceCollapsedLabel ? `From: ${sourceCollapsedLabel}` : "+ Add source"}
+              {sourceCollapsedLabel ? t("add.fromSource", { title: sourceCollapsedLabel }) : t("add.addSource")}
             </Text>
             <Feather name={sourceOpen ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedFg} />
           </TouchableOpacity>
@@ -478,15 +482,15 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
                       style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
                       value={bookSearch}
                       onChangeText={(v) => { setBookSearch(v); setBookId(""); }}
-                      placeholder="Search books…"
+                      placeholder={t("add.searchBooks")}
                       placeholderTextColor={colors.mutedFg}
                     />
-                    {bookSearch.length > 0 && (
+                    {bookSearch.length > 0 && filteredBooks.length > 0 && (
                       <View style={[styles.dropdown, { borderColor: colors.border, backgroundColor: colors.cardBg }]}>
-                        {filteredBooks.slice(0, 5).map((b) => (
+                        {filteredBooks.slice(0, 5).map((b, i) => (
                           <TouchableOpacity
                             key={b.id}
-                            style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+                            style={[styles.dropdownItem, { borderBottomColor: i < filteredBooks.slice(0, 5).length - 1 ? colors.border : "transparent" }]}
                             onPress={() => { setBookId(b.id); setBookSearch(b.title); }}
                           >
                             <Text style={[styles.dropdownText, { color: colors.fg }]}>{b.title}</Text>
@@ -495,18 +499,14 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
                             )}
                           </TouchableOpacity>
                         ))}
-                        <TouchableOpacity
-                          style={[styles.dropdownItem, { borderBottomColor: "transparent" }]}
-                          onPress={handleCreateBook}
-                          disabled={creatingBook}
-                        >
-                          {creatingBook
-                            ? <ActivityIndicator size="small" color={colors.primary} />
-                            : <Text style={[styles.dropdownText, { color: colors.primary }]}>
-                                + Create "{bookSearch}"
-                              </Text>
-                          }
-                        </TouchableOpacity>
+                      </View>
+                    )}
+                    {bookSearch.length > 0 && !bookId && (
+                      <View style={styles.newBookHint}>
+                        <Feather name="book" size={12} color={colors.mutedFg} />
+                        <Text style={[styles.newBookHintText, { color: colors.mutedFg }]}>
+                          {t("add.newBook")}: {bookSearch}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -520,14 +520,14 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
                     style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
                     value={videoTitle}
                     onChangeText={setVideoTitle}
-                    placeholder="Title (optional)"
+                    placeholder={t("add.videoTitle")}
                     placeholderTextColor={colors.mutedFg}
                   />
                   <TextInput
                     style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
                     value={videoUrl}
                     onChangeText={setVideoUrl}
-                    placeholder="Link (optional)"
+                    placeholder={t("add.videoLink")}
                     placeholderTextColor={colors.mutedFg}
                     keyboardType="url"
                     autoCapitalize="none"
@@ -549,8 +549,8 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
       >
         <Pressable style={styles.pickerOverlay} onPress={() => setCandidates([])}>
           <Pressable style={[styles.pickerSheet, { backgroundColor: colors.cardBg }]}>
-            <Text style={[styles.pickerTitle, { color: colors.fg }]}>Select a passage</Text>
-            <Text style={[styles.pickerSub, { color: colors.mutedFg }]}>Which one did you have in mind?</Text>
+            <Text style={[styles.pickerTitle, { color: colors.fg }]}>{t("add.selectPassage")}</Text>
+            <Text style={[styles.pickerSub, { color: colors.mutedFg }]}>{t("add.whichPassage")}</Text>
             <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
               {candidates.map((c, i) => (
                 <TouchableOpacity
@@ -583,8 +583,8 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
         <SafeAreaView style={styles.annotContainer} edges={["top", "bottom"]}>
           <View style={styles.annotHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.annotTitle}>Mark your quote</Text>
-              <Text style={styles.annotHint}>Drag to select · move box · drag corners to resize</Text>
+              <Text style={styles.annotTitle}>{t("add.markQuote")}</Text>
+              <Text style={styles.annotHint}>{t("add.dragHint")}</Text>
             </View>
             <TouchableOpacity onPress={() => setAnnotImage(null)} style={styles.annotClose}>
               <Text style={styles.annotCloseText}>✕</Text>
@@ -650,14 +650,14 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
                 style={styles.annotClearBtn}
                 onPress={() => { dragRectRef.current = null; setDragRect(null); }}
               >
-                <Text style={styles.annotClearText}>Clear</Text>
+                <Text style={styles.annotClearText}>{t("add.clear")}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
               style={styles.annotSkipBtn}
               onPress={() => { const b64 = annotImage!.base64; setAnnotImage(null); sendToOCR(b64, null); }}
             >
-              <Text style={styles.annotSkipText}>Full image</Text>
+              <Text style={styles.annotSkipText}>{t("add.fullImage")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.annotExtractBtn}
@@ -672,7 +672,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
               }}
             >
               <Text style={styles.annotExtractText}>
-                {hasSelection ? "Extract selection" : "Extract"}
+                {hasSelection ? t("add.extractSelection") : t("add.extract")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -771,6 +771,8 @@ const styles = StyleSheet.create({
   dropdownItem: { padding: 12, borderBottomWidth: 1 },
   dropdownText: { fontSize: 14 },
   dropdownSub: { fontSize: 12, marginTop: 2 },
+  newBookHint: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6, marginBottom: 4, paddingHorizontal: 2 },
+  newBookHintText: { fontSize: 13 },
   // Candidate picker
   pickerOverlay: {
     flex: 1,

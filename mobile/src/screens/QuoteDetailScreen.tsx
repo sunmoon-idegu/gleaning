@@ -1,8 +1,10 @@
+import { useAuth } from "@clerk/clerk-expo";
 import Feather from "@expo/vector-icons/Feather";
 import * as Clipboard from "expo-clipboard";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  PanResponder,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,40 +12,36 @@ import {
   View,
 } from "react-native";
 import { useTheme, FONT_SIZES } from "../context/ThemeContext";
-import { type Quote } from "../lib/api";
+import { apiFetch, type Quote } from "../lib/api";
 
-function sourceLabel(quote: Quote): string | null {
+function sourceLabel(quote: Quote, t: (key: string, opts?: Record<string, unknown>) => string): string | null {
   const s = quote.source;
   if (!s) return null;
   if (s.type === "book" && s.book) {
     const parts: string[] = [s.book.title];
-    if (s.book.author) parts.push(`by ${s.book.author}`);
-    if (quote.page) parts.push(`p. ${quote.page}`);
+    if (s.book.author) parts.push(t("quoteDetail.by", { author: s.book.author }));
+    if (quote.page) parts.push(t("quoteDetail.pageRef", { page: quote.page }));
     return parts.join("  ·  ");
   }
   if (s.type === "video") return s.title;
-  if (s.type === "live") return s.author ? `Live  ·  ${s.author}` : "Live";
   return null;
 }
 
 interface Props {
   quote: Quote;
   onBack: () => void;
+  onDelete?: () => void;
 }
 
-export default function QuoteDetailScreen({ quote, onBack }: Props) {
+export default function QuoteDetailScreen({ quote, onBack, onDelete }: Props) {
+  const { getToken } = useAuth();
   const { colors, appFontSize } = useTheme();
+  const { t } = useTranslation();
   const detailFontSize = FONT_SIZES[appFontSize].detail;
   const [copied, setCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const swipeBack = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gs) =>
-        gs.dx > 8 && Math.abs(gs.dx) > Math.abs(gs.dy),
-      onPanResponderRelease: (_, gs) => { if (gs.dx > 50) onBack(); },
-    })
-  ).current;
-  const src = sourceLabel(quote);
+  const src = sourceLabel(quote, t);
   const date = new Date(quote.created_at).toLocaleString(undefined, {
     year: "numeric",
     month: "long",
@@ -58,14 +56,43 @@ export default function QuoteDetailScreen({ quote, onBack }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function handleDelete() {
+    Alert.alert(
+      t("quoteDetail.deleteTitle"),
+      t("quoteDetail.deleteMessage"),
+      [
+        { text: t("settings.cancel"), style: "cancel" },
+        {
+          text: t("quoteDetail.deleteConfirm"),
+          style: "destructive",
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              const token = await getToken();
+              if (!token) return;
+              await apiFetch(`/quotes/${quote.id}`, token, { method: "DELETE" });
+              onDelete?.();
+              onBack();
+            } catch {
+              Alert.alert(t("add.errorTitle"), t("quoteDetail.deleteFailed"));
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      {/* Left-edge invisible strip captures right-swipe to go back */}
-      <View style={styles.swipeEdge} {...swipeBack.panHandlers} />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={12}>
           <Feather name="arrow-left" size={22} color={colors.fg} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn} hitSlop={12} disabled={deleting}>
+          <Feather name="trash-2" size={18} color={colors.mutedFg} />
         </TouchableOpacity>
       </View>
 
@@ -108,7 +135,7 @@ export default function QuoteDetailScreen({ quote, onBack }: Props) {
         >
           <Feather name={copied ? "check" : "copy"} size={16} color={copied ? "#16a34a" : colors.fg} />
           <Text style={[styles.actionLabel, { color: copied ? "#16a34a" : colors.fg }]}>
-            {copied ? "Copied" : "Copy"}
+            {copied ? t("quoteDetail.copied") : t("quoteDetail.copy")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -118,12 +145,20 @@ export default function QuoteDetailScreen({ quote, onBack }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  swipeEdge: { position: "absolute", left: 0, top: 0, bottom: 0, width: 24, zIndex: 10 },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   backBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteBtn: {
     width: 36,
     height: 36,
     alignItems: "center",

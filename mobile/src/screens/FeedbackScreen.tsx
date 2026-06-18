@@ -1,6 +1,7 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useAuth } from "@clerk/clerk-expo";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Keyboard,
@@ -16,13 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { apiFetch } from "../lib/api";
 
-const PRESET_OPTIONS = [
-  { id: "bug", label: "Something's broken" },
-  { id: "feature", label: "Feature request" },
-  { id: "unclear", label: "Something's unclear" },
-  { id: "love", label: "Love the app" },
-  { id: "other", label: "Other" },
-];
+const PRESET_IDS = ["bug", "feature", "unclear", "love", "other"] as const;
 
 interface Props {
   onBack: () => void;
@@ -31,6 +26,7 @@ interface Props {
 export default function FeedbackScreen({ onBack }: Props) {
   const { colors } = useTheme();
   const { getToken } = useAuth();
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -50,7 +46,7 @@ export default function FeedbackScreen({ onBack }: Props) {
       });
       setSent(true);
     } catch {
-      Alert.alert("Failed to send", "Please try again.");
+      Alert.alert(t("feedback.failedTitle"), t("feedback.failedMessage"));
     } finally {
       setSending(false);
     }
@@ -63,17 +59,15 @@ export default function FeedbackScreen({ onBack }: Props) {
           <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={12}>
             <Feather name="arrow-left" size={22} color={colors.fg} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.fg }]}>Send feedback</Text>
+          <Text style={[styles.title, { color: colors.fg }]}>{t("feedback.heading")}</Text>
           <View style={styles.backBtn} />
         </View>
         <View style={styles.thanks}>
           <Feather name="check-circle" size={48} color="#16a34a" />
-          <Text style={[styles.thanksTitle, { color: colors.fg }]}>Thank you!</Text>
-          <Text style={[styles.thanksBody, { color: colors.mutedFg }]}>
-            Your feedback has been received.
-          </Text>
+          <Text style={[styles.thanksTitle, { color: colors.fg }]}>{t("feedback.thankYouTitle")}</Text>
+          <Text style={[styles.thanksBody, { color: colors.mutedFg }]}>{t("feedback.thankYouBody")}</Text>
           <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={onBack}>
-            <Text style={[styles.doneText, { color: colors.primaryFg }]}>Done</Text>
+            <Text style={[styles.doneText, { color: colors.primaryFg }]}>{t("feedback.done")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -93,28 +87,28 @@ export default function FeedbackScreen({ onBack }: Props) {
               <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={12}>
                 <Feather name="arrow-left" size={22} color={colors.fg} />
               </TouchableOpacity>
-              <Text style={[styles.title, { color: colors.fg }]}>Send feedback</Text>
+              <Text style={[styles.title, { color: colors.fg }]}>{t("feedback.heading")}</Text>
               <View style={styles.backBtn} />
             </View>
 
             <View style={styles.body}>
-              <Text style={[styles.label, { color: colors.mutedFg }]}>What's on your mind?</Text>
+              <Text style={[styles.label, { color: colors.mutedFg }]}>{t("feedback.whatsMind")}</Text>
               <View style={styles.chips}>
-                {PRESET_OPTIONS.map((opt) => {
-                  const active = selected === opt.id;
+                {PRESET_IDS.map((id) => {
+                  const active = selected === id;
                   return (
                     <TouchableOpacity
-                      key={opt.id}
+                      key={id}
                       style={[
                         styles.chip,
                         { borderColor: active ? colors.primary : colors.border },
                         active && { backgroundColor: colors.primary },
                       ]}
-                      onPress={() => setSelected(active ? null : opt.id)}
+                      onPress={() => setSelected(active ? null : id)}
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.chipText, { color: active ? colors.primaryFg : colors.fg }]}>
-                        {opt.label}
+                        {t(`feedback.${id}`)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -122,14 +116,14 @@ export default function FeedbackScreen({ onBack }: Props) {
               </View>
 
               <Text style={[styles.label, { color: colors.mutedFg, marginTop: 20 }]}>
-                Add details (optional)
+                {t("feedback.details")}
               </Text>
               <TextInput
                 style={[
                   styles.textArea,
                   { backgroundColor: colors.cardBg, borderColor: colors.border, color: colors.fg },
                 ]}
-                placeholder="Tell us more..."
+                placeholder={t("feedback.placeholder")}
                 placeholderTextColor={colors.mutedFg}
                 multiline
                 numberOfLines={6}
@@ -138,7 +132,7 @@ export default function FeedbackScreen({ onBack }: Props) {
                 onChangeText={setText}
                 maxLength={1000}
               />
-              <Text style={[styles.charCount, { color: colors.mutedFg }]}>{text.length} / 1000</Text>
+              <Text style={[styles.charCount, { color: colors.mutedFg }]}>{t("feedback.charCount", { count: text.length })}</Text>
             </View>
           </ScrollView>
         </TouchableWithoutFeedback>
@@ -155,7 +149,7 @@ export default function FeedbackScreen({ onBack }: Props) {
             activeOpacity={0.8}
           >
             <Text style={[styles.submitText, { color: colors.primaryFg }]}>
-              {sending ? "Sending…" : "Send"}
+              {sending ? t("feedback.sending") : t("feedback.send")}
             </Text>
           </TouchableOpacity>
         </View>

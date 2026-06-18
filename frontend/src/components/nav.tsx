@@ -5,18 +5,21 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Search, BookOpen, List, HelpCircle, MessageSquare } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "./theme-toggle";
+import { LangToggle } from "./lang-toggle";
 import { SearchModal } from "./search-modal";
 import { Button } from "@/components/ui/button";
 import { GleaningIcon } from "@/components/gleaning-icon";
 
-const links = [
-  { href: "/feed", label: "Feed", icon: List },
-  { href: "/shelf", label: "Shelf", icon: BookOpen },
-];
-
 export function Nav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const links = [
+    { href: "/feed", label: t("nav.feed"), icon: List },
+    { href: "/shelf", label: t("nav.shelf"), icon: BookOpen },
+  ];
   const [searchOpen, setSearchOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
 
@@ -83,17 +86,18 @@ export function Nav() {
             >
               <Search size={16} />
             </Button>
+            <LangToggle />
             <ThemeToggle />
             <div className="ml-2 flex items-center">
               <UserButton>
                 <UserButton.MenuItems>
                   <UserButton.Link
-                    label="Help"
+                    label={t("nav.help")}
                     href="/help"
                     labelIcon={<HelpCircle size={16} />}
                   />
                   <UserButton.Link
-                    label="Send feedback"
+                    label={t("nav.feedback")}
                     href="/feedback"
                     labelIcon={<MessageSquare size={16} />}
                   />

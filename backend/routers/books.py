@@ -2,6 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from auth import verify_token
@@ -36,7 +37,11 @@ def create_book(
 ):
     book = Book(user_id=current_user.id, title=body.title, author=body.author, language=body.language)
     db.add(book)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A book with this title already exists.")
     db.refresh(book)
     return book
 
@@ -87,7 +92,11 @@ def update_book(
         book.author = body.author
     if body.language is not None:
         book.language = body.language
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A book with this title already exists.")
     db.refresh(book)
     return book
 
@@ -99,5 +108,11 @@ def delete_book(
     current_user: User = Depends(verify_token),
 ):
     book = _own_book_or_404(book_id, current_user, db)
+    source_ids = [
+        s.id for s in db.query(Source.id).filter(Source.book_id == book_id).all()
+    ]
+    if source_ids:
+        db.query(Quote).filter(Quote.source_id.in_(source_ids)).delete(synchronize_session=False)
+        db.query(Source).filter(Source.id.in_(source_ids)).delete(synchronize_session=False)
     db.delete(book)
     db.commit()

@@ -3,7 +3,8 @@ import Feather from "@expo/vector-icons/Feather";
 import { useRef, useState } from "react";
 import { Alert, Animated, Easing, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme, type ThemeMode, type SortOrder, type AppFontSize } from "../context/ThemeContext";
+import { useTranslation } from "react-i18next";
+import { useTheme, type ThemeMode, type SortOrder, type AppFontSize, type AppLanguage } from "../context/ThemeContext";
 import { apiFetch } from "../lib/api";
 import FeedbackScreen from "./FeedbackScreen";
 
@@ -43,29 +44,34 @@ function SegmentControl<T extends string>({
   );
 }
 
-const THEMES: { value: ThemeMode; label: string }[] = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "colorful", label: "Colorful" },
-];
-
-const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
-  { value: "newest", label: "Newest" },
-  { value: "oldest", label: "Oldest" },
-  { value: "random", label: "Random" },
-];
-
-const FONT_OPTIONS: { value: AppFontSize; label: string }[] = [
-  { value: "small", label: "Small" },
-  { value: "medium", label: "Medium" },
-  { value: "large", label: "Large" },
-];
 
 export default function SettingsScreen() {
   const { signOut, getToken } = useAuth();
   const { user } = useUser();
-  const { theme, colors, setTheme, sortOrder, setSortOrder, appFontSize, setAppFontSize } = useTheme();
+  const { theme, colors, setTheme, sortOrder, setSortOrder, appFontSize, setAppFontSize, language, setLanguage } = useTheme();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
+
+  const THEMES: { value: ThemeMode; label: string }[] = [
+    { value: "light", label: t("settings.themeLight") },
+    { value: "dark", label: t("settings.themeDark") },
+    { value: "colorful", label: t("settings.themeColorful") },
+  ];
+  const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+    { value: "newest", label: t("settings.sortNewest") },
+    { value: "oldest", label: t("settings.sortOldest") },
+    { value: "random", label: t("settings.sortRandom") },
+  ];
+  const FONT_OPTIONS: { value: AppFontSize; label: string }[] = [
+    { value: "small", label: t("settings.sizeSmall") },
+    { value: "medium", label: t("settings.sizeMedium") },
+    { value: "large", label: t("settings.sizeLarge") },
+  ];
+  const LANG_OPTIONS: { value: AppLanguage; label: string }[] = [
+    { value: "en", label: t("settings.langEn") },
+    { value: "zh", label: t("settings.langZh") },
+    { value: "ja", label: t("settings.langJa") },
+  ];
   const [showFeedback, setShowFeedback] = useState(false);
   const slideAnim = useRef(new Animated.Value(width)).current;
 
@@ -92,12 +98,12 @@ export default function SettingsScreen() {
   const swipeResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, gs) =>
-        Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
+        (gs.moveX - gs.dx) < width * 0.35 && Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
       onPanResponderMove: (_e, gs) => {
         if (gs.dx > 0) slideAnim.setValue(gs.dx);
       },
       onPanResponderRelease: (_e, gs) => {
-        if (gs.dx > width * 0.3 || gs.vx > 0.5) {
+        if (gs.dx > width * 0.45 || gs.vx > 0.8) {
           closeFeedback();
         } else {
           Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
@@ -108,12 +114,12 @@ export default function SettingsScreen() {
 
   function handleDeleteAccount() {
     Alert.alert(
-      "Delete Account",
-      "Your account will be permanently deleted in 30 days, including all quotes and data. You will be signed out immediately.",
+      t("settings.deleteTitle"),
+      t("settings.deleteMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("settings.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("settings.deleteConfirm"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -133,50 +139,54 @@ export default function SettingsScreen() {
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={[styles.heading, { color: colors.fg }]}>Settings</Text>
+        <Text style={[styles.heading, { color: colors.fg }]}>{t("settings.heading")}</Text>
 
         {/* Account */}
-        <Text style={[styles.section, { color: colors.mutedFg }]}>Account</Text>
+        <Text style={[styles.section, { color: colors.mutedFg }]}>{t("settings.account")}</Text>
         <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-          <Row label="Email" value={user?.primaryEmailAddress?.emailAddress} colors={colors} />
+          <Row label={t("settings.email")} value={user?.primaryEmailAddress?.emailAddress} colors={colors} />
         </View>
 
         {/* Appearance */}
-        <Text style={[styles.section, { color: colors.mutedFg }]}>Appearance</Text>
+        <Text style={[styles.section, { color: colors.mutedFg }]}>{t("settings.appearance")}</Text>
         <SegmentControl options={THEMES} value={theme} onSelect={setTheme} colors={colors} />
 
         {/* Feed */}
-        <Text style={[styles.section, { color: colors.mutedFg }]}>Feed</Text>
-        <Text style={[styles.subLabel, { color: colors.mutedFg }]}>Sort order</Text>
+        <Text style={[styles.section, { color: colors.mutedFg }]}>{t("settings.feed")}</Text>
+        <Text style={[styles.subLabel, { color: colors.mutedFg }]}>{t("settings.sortOrder")}</Text>
         <SegmentControl options={SORT_OPTIONS} value={sortOrder} onSelect={setSortOrder} colors={colors} />
-        <Text style={[styles.subLabel, { color: colors.mutedFg }]}>Text size</Text>
+        <Text style={[styles.subLabel, { color: colors.mutedFg }]}>{t("settings.textSize")}</Text>
         <SegmentControl options={FONT_OPTIONS} value={appFontSize} onSelect={setAppFontSize} colors={colors} />
 
+        {/* Language */}
+        <Text style={[styles.subLabel, { color: colors.mutedFg }]}>{t("settings.language")}</Text>
+        <SegmentControl options={LANG_OPTIONS} value={language} onSelect={setLanguage} colors={colors} />
+
         {/* Feedback */}
-        <Text style={[styles.section, { color: colors.mutedFg }]}>Support</Text>
+        <Text style={[styles.section, { color: colors.mutedFg }]}>{t("settings.support")}</Text>
         <TouchableOpacity
           style={[styles.card, styles.feedbackRow, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
           onPress={openFeedback}
           activeOpacity={0.6}
         >
-          <Text style={[styles.rowLabel, { color: colors.fg }]}>Send feedback</Text>
+          <Text style={[styles.rowLabel, { color: colors.fg }]}>{t("settings.sendFeedback")}</Text>
           <Feather name="chevron-right" size={18} color={colors.mutedFg} />
         </TouchableOpacity>
 
         {/* Sign out */}
-        <TouchableOpacity style={styles.signOutBtn} onPress={() => signOut()} activeOpacity={0.7}>
-          <Text style={styles.signOutText}>Sign out</Text>
+        <TouchableOpacity style={[styles.signOutBtn, { backgroundColor: colors.muted }]} onPress={() => signOut()} activeOpacity={0.7}>
+          <Text style={[styles.signOutText, { color: colors.fg }]}>{t("settings.signOut")}</Text>
         </TouchableOpacity>
 
         {/* Delete account */}
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} activeOpacity={0.7}>
-          <Text style={styles.deleteText}>Delete account</Text>
+        <TouchableOpacity style={[styles.deleteBtn, { borderColor: "#dc2626" }]} onPress={handleDeleteAccount} activeOpacity={0.7}>
+          <Text style={styles.deleteText}>{t("settings.deleteAccount")}</Text>
         </TouchableOpacity>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={[styles.tagline, { color: colors.mutedFg }]}>Quotes. Keep the best. Nothing else.</Text>
-          <Text style={[styles.copyright, { color: colors.mutedFg }]}>© 2026 Gleaning</Text>
+          <Text style={[styles.tagline, { color: colors.mutedFg }]}>{t("settings.tagline")}</Text>
+          <Text style={[styles.copyright, { color: colors.mutedFg }]}>{t("settings.copyright")}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -212,11 +222,12 @@ const styles = StyleSheet.create({
   segText: { fontSize: 13, fontWeight: "500" },
   signOutBtn: {
     marginHorizontal: 16, marginTop: 28, padding: 16,
-    borderRadius: 12, backgroundColor: "#fee2e2", alignItems: "center",
+    borderRadius: 12, alignItems: "center",
   },
-  signOutText: { color: "#dc2626", fontWeight: "600", fontSize: 15 },
+  signOutText: { fontWeight: "600", fontSize: 15 },
   deleteBtn: {
     marginHorizontal: 16, marginTop: 10, padding: 14, alignItems: "center",
+    borderRadius: 12, borderWidth: 1,
   },
   deleteText: { color: "#dc2626", fontSize: 14 },
   feedbackRow: {
