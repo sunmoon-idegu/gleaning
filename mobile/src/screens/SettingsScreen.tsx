@@ -1,4 +1,5 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import Feather from "@expo/vector-icons/Feather";
 import { useRef, useState } from "react";
 import { Alert, Animated, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -138,12 +139,14 @@ export default function SettingsScreen() {
 
         {/* Feedback */}
         <Text style={[styles.section, { color: colors.mutedFg }]}>Support</Text>
-        <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-          <TouchableOpacity style={[styles.row, { borderBottomColor: "transparent" }]} onPress={openFeedback} activeOpacity={0.6}>
-            <Text style={[styles.rowLabel, { color: colors.fg }]}>Send feedback</Text>
-            <Text style={[styles.rowChevron, { color: colors.mutedFg }]}>›</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.card, styles.feedbackRow, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
+          onPress={openFeedback}
+          activeOpacity={0.6}
+        >
+          <Text style={[styles.rowLabel, { color: colors.fg }]}>Send feedback</Text>
+          <Feather name="chevron-right" size={18} color={colors.mutedFg} />
+        </TouchableOpacity>
 
         {/* About */}
         <Text style={[styles.section, { color: colors.mutedFg }]}>About</Text>
@@ -164,7 +167,7 @@ export default function SettingsScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={[styles.tagline, { color: colors.mutedFg }]}>Quotes. Keep the best. Nothing else.</Text>
-          <Text style={[styles.copyright, { color: colors.mutedFg }]}>© 2025 Gleaning</Text>
+          <Text style={[styles.copyright, { color: colors.mutedFg }]}>© 2026 Gleaning</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -204,6 +207,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 16, marginTop: 10, padding: 14, alignItems: "center",
   },
   deleteText: { color: "#dc2626", fontSize: 14 },
+  feedbackRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingVertical: 14,
+  },
   footer: { alignItems: "center", paddingTop: 28, paddingBottom: 40, gap: 4 },
   tagline: { fontSize: 13, fontStyle: "italic" },
   copyright: { fontSize: 11 },

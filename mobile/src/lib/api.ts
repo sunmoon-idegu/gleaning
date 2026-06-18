@@ -7,6 +7,13 @@ export class ApiError extends Error {
   }
 }
 
+type DeletedHandler = (deletedAt: string) => void;
+let _deletedHandler: DeletedHandler | null = null;
+
+export function registerDeletedHandler(handler: DeletedHandler | null) {
+  _deletedHandler = handler;
+}
+
 export async function apiFetch<T>(
   path: string,
   token: string,
@@ -23,7 +30,17 @@ export async function apiFetch<T>(
   if (!res.ok) {
     let body: unknown;
     try { body = await res.json(); } catch { body = await res.text().catch(() => ""); }
-    throw new ApiError(res.status, body, `API error ${res.status}`);
+    const error = new ApiError(res.status, body, `API error ${res.status}`);
+
+    if (res.status === 403 && _deletedHandler) {
+      const detail = (body as any)?.detail;
+      const isDeleted =
+        detail?.code === "account_deleted" ||
+        (typeof detail === "string" && detail.toLowerCase().includes("deleted"));
+      if (isDeleted) _deletedHandler(detail?.deleted_at ?? "");
+    }
+
+    throw error;
   }
   if (res.status === 204) return undefined as T;
   return res.json();

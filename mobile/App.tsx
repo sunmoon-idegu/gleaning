@@ -6,7 +6,7 @@ import Feather from "@expo/vector-icons/Feather";
 import { useEffect, useState } from "react";
 import { tokenCache } from "./src/tokenCache";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
-import { apiFetch, ApiError } from "./src/lib/api";
+import { registerDeletedHandler } from "./src/lib/api";
 import SignInScreen from "./src/screens/SignInScreen";
 import FeedScreen from "./src/screens/FeedScreen";
 import AddScreen from "./src/screens/AddScreen";
@@ -101,40 +101,21 @@ function AppTabs() {
 }
 
 function RootNavigator() {
-  const { isSignedIn, isLoaded, getToken } = useAuth();
-  const [accountState, setAccountState] = useState<"checking" | "active" | "deleted">("checking");
-  const [deletedAt, setDeletedAt] = useState<string>("");
+  const { isSignedIn, isLoaded } = useAuth();
+  const [deletedAt, setDeletedAt] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isSignedIn) {
-      setAccountState("checking");
-      return;
-    }
-    getToken().then(async (token) => {
-      if (!token) { setAccountState("active"); return; }
-      try {
-        await apiFetch("/me", token);
-        setAccountState("active");
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 403) {
-          // Handle both old string format and new dict format
-          const detail = (err.body as any)?.detail;
-          const isDeleted =
-            detail?.code === "account_deleted" ||
-            (typeof detail === "string" && detail.toLowerCase().includes("deleted"));
-          if (isDeleted) {
-            setDeletedAt(detail?.deleted_at ?? "");
-            setAccountState("deleted");
-            return;
-          }
-        }
-        // Network error or unexpected — let them in, screens handle their own errors
-        setAccountState("active");
-      }
-    });
+    // Register once. Any apiFetch call that gets a 403 "account_deleted" fires this.
+    registerDeletedHandler((ts) => setDeletedAt(ts));
+    return () => registerDeletedHandler(null);
+  }, []);
+
+  // Reset deleted state when user signs out and back in
+  useEffect(() => {
+    if (!isSignedIn) setDeletedAt(null);
   }, [isSignedIn]);
 
-  if (!isLoaded || (isSignedIn && accountState === "checking")) {
+  if (!isLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator />
@@ -144,11 +125,11 @@ function RootNavigator() {
 
   if (!isSignedIn) return <SignInScreen />;
 
-  if (accountState === "deleted") {
+  if (deletedAt !== null) {
     return (
       <DeletedAccountScreen
         deletedAt={deletedAt}
-        onRecovered={() => setAccountState("active")}
+        onRecovered={() => setDeletedAt(null)}
       />
     );
   }

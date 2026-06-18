@@ -3,6 +3,7 @@ import os
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
+from fastapi import HTTPException
 
 load_dotenv()
 
@@ -22,6 +23,8 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Database session error")
         raise
