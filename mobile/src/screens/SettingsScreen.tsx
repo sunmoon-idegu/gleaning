@@ -1,13 +1,11 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import Feather from "@expo/vector-icons/Feather";
 import { useRef, useState } from "react";
-import { Alert, Animated, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Alert, Animated, Easing, PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, type ThemeMode, type SortOrder, type AppFontSize } from "../context/ThemeContext";
 import { apiFetch } from "../lib/api";
 import FeedbackScreen from "./FeedbackScreen";
-
-const APP_VERSION = "1.0.0";
 
 function Row({ label, value, colors }: { label: string; value?: string; colors: ReturnType<typeof useTheme>["colors"] }) {
   return (
@@ -91,6 +89,23 @@ export default function SettingsScreen() {
     }).start(() => setShowFeedback(false));
   }
 
+  const swipeResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, gs) =>
+        Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
+      onPanResponderMove: (_e, gs) => {
+        if (gs.dx > 0) slideAnim.setValue(gs.dx);
+      },
+      onPanResponderRelease: (_e, gs) => {
+        if (gs.dx > width * 0.3 || gs.vx > 0.5) {
+          closeFeedback();
+        } else {
+          Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
+
   function handleDeleteAccount() {
     Alert.alert(
       "Delete Account",
@@ -148,12 +163,6 @@ export default function SettingsScreen() {
           <Feather name="chevron-right" size={18} color={colors.mutedFg} />
         </TouchableOpacity>
 
-        {/* About */}
-        <Text style={[styles.section, { color: colors.mutedFg }]}>About</Text>
-        <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-          <Row label="Version" value={APP_VERSION} colors={colors} />
-        </View>
-
         {/* Sign out */}
         <TouchableOpacity style={styles.signOutBtn} onPress={() => signOut()} activeOpacity={0.7}>
           <Text style={styles.signOutText}>Sign out</Text>
@@ -173,7 +182,10 @@ export default function SettingsScreen() {
     </SafeAreaView>
 
     {showFeedback && (
-      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: slideAnim }] }]}>
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { transform: [{ translateX: slideAnim }] }]}
+        {...swipeResponder.panHandlers}
+      >
         <FeedbackScreen onBack={closeFeedback} />
       </Animated.View>
     )}

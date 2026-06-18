@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/clerk-expo";
 import * as ImagePicker from "expo-image-picker";
+import Feather from "@expo/vector-icons/Feather";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,10 +24,10 @@ import { apiFetch, type Book, type Quote } from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL!;
-const CORNER_HIT = 26; // touch radius for corner handles
-const HANDLE_SIZE = 13; // visual size of corner dots
+const CORNER_HIT = 26;
+const HANDLE_SIZE = 13;
 
-type SourceType = "book" | "video" | "live" | "unknown" | null;
+type SourceType = "book" | "video" | null;
 
 interface AddScreenProps {
   onAdded?: () => void;
@@ -66,25 +67,22 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
 
   const [text, setText] = useState("");
   const [sourceType, setSourceType] = useState<SourceType>(null);
+  const [sourceOpen, setSourceOpen] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [bookSearch, setBookSearch] = useState("");
   const [bookId, setBookId] = useState("");
   const [creatingBook, setCreatingBook] = useState(false);
   const [page, setPage] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
-  const [liveSpeaker, setLiveSpeaker] = useState("");
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [candidates, setCandidates] = useState<string[]>([]);
 
-  // Annotation state
   const [annotImage, setAnnotImage] = useState<{ uri: string; base64: string; iw: number; ih: number } | null>(null);
   const [dragRect, setDragRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [annotLayout, setAnnotLayout] = useState<{ width: number; height: number } | null>(null);
 
-  // Refs so PanResponder callbacks (created once) can read current state
   const dragRectRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const annotLayoutRef = useRef<{ width: number; height: number } | null>(null);
   const gestureMode = useRef<"draw" | "move" | "resize">("draw");
@@ -97,15 +95,10 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (e) => {
-        // locationX/Y may be relative to a child view if touch lands on the selection
-        // box or a handle. Use them only for hit-testing (which is tolerant of small
-        // offsets). Actual movement uses gestureState.dx/dy which are always deltas
-        // from the gesture origin and are coordinate-space independent.
         const { locationX: tx, locationY: ty } = e.nativeEvent;
         const rect = dragRectRef.current;
 
         if (rect && rect.w > 10 && rect.h > 10) {
-          // Check corner handles first (generous hit target)
           const corners = [
             { px: rect.x,          py: rect.y,          ax: rect.x + rect.w, ay: rect.y + rect.h },
             { px: rect.x + rect.w, py: rect.y,          ax: rect.x,          ay: rect.y + rect.h },
@@ -116,11 +109,10 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
             if (Math.hypot(tx - c.px, ty - c.py) < CORNER_HIT) {
               gestureMode.current = "resize";
               resizeAnchorPt.current = { x: c.ax, y: c.ay };
-              startPt.current = { x: c.px, y: c.py }; // active corner at grant time
+              startPt.current = { x: c.px, y: c.py };
               return;
             }
           }
-          // Inside box (with a small margin for border touches) → move
           if (
             tx >= rect.x - 8 && tx <= rect.x + rect.w + 8 &&
             ty >= rect.y - 8 && ty <= rect.y + rect.h + 8
@@ -131,15 +123,12 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
           }
         }
 
-        // Outside (or no box) → draw new box
         gestureMode.current = "draw";
         startPt.current = { x: tx, y: ty };
         dragRectRef.current = { x: tx, y: ty, w: 0, h: 0 };
         setDragRect({ x: tx, y: ty, w: 0, h: 0 });
       },
       onPanResponderMove: (_e, gestureState) => {
-        // Use gestureState.dx/dy — these are deltas from the gesture start and are
-        // consistent regardless of which child view received the initial touch.
         const { dx, dy } = gestureState;
 
         if (gestureMode.current === "draw" && startPt.current) {
@@ -289,12 +278,6 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
     }
   }
 
-  function addTag(val: string) {
-    const trimmed = val.trim().toLowerCase();
-    if (trimmed && !tags.includes(trimmed)) setTags((t) => [...t, trimmed]);
-    setTagInput("");
-  }
-
   async function handleSave() {
     if (!text.trim() || saving) return;
     setSaving(true);
@@ -310,33 +293,12 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
           body: JSON.stringify({ type: "book", book_id: bookId }),
         });
         sourceId = src.id;
-      } else if (sourceType === "video" && videoTitle) {
+      } else if (sourceType === "video" && (videoTitle || videoUrl)) {
         const src = await apiFetch<{ id: string }>("/sources", token, {
           method: "POST",
-          body: JSON.stringify({ type: "video", title: videoTitle }),
+          body: JSON.stringify({ type: "video", title: videoTitle || null, url: videoUrl || null }),
         });
         sourceId = src.id;
-      } else if (sourceType === "live") {
-        const src = await apiFetch<{ id: string }>("/sources", token, {
-          method: "POST",
-          body: JSON.stringify({ type: "live", author: liveSpeaker || null }),
-        });
-        sourceId = src.id;
-      } else if (sourceType === "unknown") {
-        const src = await apiFetch<{ id: string }>("/sources", token, {
-          method: "POST",
-          body: JSON.stringify({ type: "unknown" }),
-        });
-        sourceId = src.id;
-      }
-
-      const tagIds: string[] = [];
-      for (const name of tags) {
-        const tag = await apiFetch<{ id: string }>("/tags", token, {
-          method: "POST",
-          body: JSON.stringify({ name }),
-        });
-        tagIds.push(tag.id);
       }
 
       await apiFetch<Quote>("/quotes", token, {
@@ -345,12 +307,13 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
           text: text.trim(),
           page: page ? parseInt(page) : null,
           source_id: sourceId,
-          tag_ids: tagIds,
+          tag_ids: [],
         }),
       });
 
-      setText(""); setSourceType(null); setBookSearch(""); setBookId("");
-      setPage(""); setVideoTitle(""); setLiveSpeaker(""); setTags([]); setTagInput("");
+      setText(""); setSourceType(null); setSourceOpen(false);
+      setBookSearch(""); setBookId(""); setPage(""); setVideoTitle(""); setVideoUrl("");
+      setTags([]); setTagInput("");
       onAdded?.();
       Alert.alert("Saved", "Quote saved to Gleaning.", [
         { text: "OK", onPress: () => navigation.navigate("Feed" as never) },
@@ -365,9 +328,14 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
   const sourceTypes: { value: SourceType; label: string }[] = [
     { value: "book", label: "Book" },
     { value: "video", label: "Video" },
-    { value: "live", label: "Live" },
-    { value: "unknown", label: "Unknown" },
   ];
+
+  const sourceCollapsedLabel = (() => {
+    if (!sourceType) return null;
+    if (sourceType === "book" && bookSearch) return bookSearch;
+    if (sourceType === "video") return videoTitle || videoUrl || "Video";
+    return null;
+  })();
 
   const hasSelection = dragRect !== null && dragRect.w > 10 && dragRect.h > 10;
 
@@ -383,7 +351,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
         >
           <Text style={[styles.heading, { color: colors.fg }]}>Add quote</Text>
 
-          {/* Camera buttons */}
+          {/* Capture buttons */}
           <View style={styles.captureRow}>
             <TouchableOpacity
               style={[styles.captureBtn, { borderColor: colors.border }]}
@@ -413,136 +381,162 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
             autoFocus={false}
           />
 
-          {/* Source type pills */}
-          <View style={styles.pills}>
-            {sourceTypes.map(({ value, label }) => (
-              <TouchableOpacity
-                key={value}
-                style={[
-                  styles.pill,
-                  { backgroundColor: colors.muted },
-                  sourceType === value && { backgroundColor: colors.primary },
-                ]}
-                onPress={() => setSourceType(sourceType === value ? null : value)}
-              >
-                <Text style={[
-                  styles.pillText,
-                  { color: colors.mutedFg },
-                  sourceType === value && { color: colors.primaryFg },
-                ]}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Book */}
-          {sourceType === "book" && (
-            <View style={styles.section}>
-              <View style={styles.bookRow}>
-                <TextInput
-                  style={[styles.input, styles.bookInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-                  value={bookSearch}
-                  onChangeText={(v) => { setBookSearch(v); setBookId(""); }}
-                  placeholder="Search books…"
-                  placeholderTextColor={colors.mutedFg}
-                />
-                <TextInput
-                  style={[styles.input, styles.pageInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-                  value={page}
-                  onChangeText={(v) => setPage(v.replace(/\D/g, ""))}
-                  placeholder="Page"
-                  placeholderTextColor={colors.mutedFg}
-                  keyboardType="numeric"
-                />
-              </View>
-              {bookSearch && !bookId && (
-                <View style={[styles.dropdown, { borderColor: colors.border, backgroundColor: colors.cardBg }]}>
-                  {filteredBooks.slice(0, 5).map((b) => (
-                    <TouchableOpacity
-                      key={b.id}
-                      style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
-                      onPress={() => { setBookId(b.id); setBookSearch(b.title); }}
-                    >
-                      <Text style={[styles.dropdownText, { color: colors.fg }]}>{b.title}</Text>
-                      {b.author && <Text style={[styles.dropdownSub, { color: colors.mutedFg }]}>{b.author}</Text>}
-                    </TouchableOpacity>
-                  ))}
-                  <TouchableOpacity
-                    style={[styles.dropdownItem, { borderBottomColor: "transparent" }]}
-                    onPress={handleCreateBook}
-                    disabled={creatingBook}
-                  >
-                    {creatingBook
-                      ? <ActivityIndicator size="small" color={colors.primary} />
-                      : <Text style={[styles.dropdownText, { color: colors.primary }]}>
-                          + Create "{bookSearch}"
-                        </Text>
-                    }
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* Video */}
-          {sourceType === "video" && (
-            <TextInput
-              style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-              value={videoTitle}
-              onChangeText={setVideoTitle}
-              placeholder="Video title"
-              placeholderTextColor={colors.mutedFg}
-            />
-          )}
-
-          {/* Live */}
-          {sourceType === "live" && (
-            <TextInput
-              style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-              value={liveSpeaker}
-              onChangeText={setLiveSpeaker}
-              placeholder="Speaker (optional)"
-              placeholderTextColor={colors.mutedFg}
-            />
-          )}
-
-          {/* Tags */}
-          {tags.length > 0 && (
-            <View style={styles.tagList}>
-              {tags.map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.tagChip, { backgroundColor: colors.muted }]}
-                  onPress={() => setTags(tags.filter((x) => x !== t))}
-                >
-                  <Text style={[styles.tagChipText, { color: colors.mutedFg }]}>{t} ×</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          <TextInput
-            style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-            value={tagInput}
-            onChangeText={setTagInput}
-            onSubmitEditing={() => addTag(tagInput)}
-            onBlur={() => { if (tagInput) addTag(tagInput); }}
-            placeholder="Tags (press return to add)"
-            placeholderTextColor={colors.mutedFg}
-            returnKeyType="done"
-          />
-
-          {/* Save */}
+          {/* Save — primary action immediately below the text */}
           <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: colors.primary }, (!text.trim() || saving) && styles.saveBtnDisabled]}
+            style={[
+              styles.saveBtn,
+              { backgroundColor: colors.primary },
+              (!text.trim() || saving) && styles.saveBtnDisabled,
+            ]}
             onPress={handleSave}
             disabled={!text.trim() || saving}
           >
             {saving
               ? <ActivityIndicator color={colors.primaryFg} />
-              : <Text style={[styles.saveBtnText, { color: colors.primaryFg }]}>Save quote</Text>
+              : <Text style={[styles.saveBtnText, { color: colors.primaryFg }]}>Save</Text>
             }
           </TouchableOpacity>
+
+          {/* Source (collapsible) */}
+          <TouchableOpacity
+            style={[styles.collapseRow, { borderTopColor: colors.border }]}
+            onPress={() => setSourceOpen(!sourceOpen)}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[styles.collapseLabel, { color: sourceCollapsedLabel ? colors.fg : colors.mutedFg }]}
+              numberOfLines={1}
+            >
+              {sourceCollapsedLabel ? `From: ${sourceCollapsedLabel}` : "+ Add source"}
+            </Text>
+            <Feather name={sourceOpen ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedFg} />
+          </TouchableOpacity>
+
+          {sourceOpen && (
+            <View style={styles.collapseBody}>
+              {/* Source type pills */}
+              <View style={styles.pills}>
+                {sourceTypes.map(({ value, label }) => (
+                  <TouchableOpacity
+                    key={value}
+                    style={[
+                      styles.pill,
+                      { backgroundColor: colors.muted },
+                      sourceType === value && { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => {
+                      if (sourceType === value) {
+                        setSourceType(null);
+                        setBookSearch(""); setBookId(""); setPage("");
+                        setVideoTitle(""); setVideoUrl("");
+                      } else {
+                        setSourceType(value);
+                      }
+                    }}
+                  >
+                    <Text style={[
+                      styles.pillText,
+                      { color: colors.mutedFg },
+                      sourceType === value && { color: colors.primaryFg },
+                    ]}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Book */}
+              {sourceType === "book" && (
+                bookId ? (
+                  // Book selected: chip + page field + clear
+                  <View style={[styles.selectedBookRow, { borderColor: colors.border }]}>
+                    <View style={[styles.selectedBookChip, { backgroundColor: colors.muted }]}>
+                      <Feather name="book" size={13} color={colors.mutedFg} style={{ marginRight: 5 }} />
+                      <Text style={[styles.selectedBookText, { color: colors.fg }]} numberOfLines={1}>
+                        {bookSearch}
+                      </Text>
+                    </View>
+                    <TextInput
+                      style={[styles.pageInputSmall, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
+                      value={page}
+                      onChangeText={(v) => setPage(v.replace(/\D/g, ""))}
+                      placeholder="p."
+                      placeholderTextColor={colors.mutedFg}
+                      keyboardType="numeric"
+                    />
+                    <TouchableOpacity
+                      style={styles.clearBookBtn}
+                      onPress={() => { setBookId(""); setBookSearch(""); setPage(""); }}
+                    >
+                      <Feather name="x" size={16} color={colors.mutedFg} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // Book search + autocomplete
+                  <View>
+                    <TextInput
+                      style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
+                      value={bookSearch}
+                      onChangeText={(v) => { setBookSearch(v); setBookId(""); }}
+                      placeholder="Search books…"
+                      placeholderTextColor={colors.mutedFg}
+                    />
+                    {bookSearch.length > 0 && (
+                      <View style={[styles.dropdown, { borderColor: colors.border, backgroundColor: colors.cardBg }]}>
+                        {filteredBooks.slice(0, 5).map((b) => (
+                          <TouchableOpacity
+                            key={b.id}
+                            style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+                            onPress={() => { setBookId(b.id); setBookSearch(b.title); }}
+                          >
+                            <Text style={[styles.dropdownText, { color: colors.fg }]}>{b.title}</Text>
+                            {b.author && (
+                              <Text style={[styles.dropdownSub, { color: colors.mutedFg }]}>{b.author}</Text>
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                        <TouchableOpacity
+                          style={[styles.dropdownItem, { borderBottomColor: "transparent" }]}
+                          onPress={handleCreateBook}
+                          disabled={creatingBook}
+                        >
+                          {creatingBook
+                            ? <ActivityIndicator size="small" color={colors.primary} />
+                            : <Text style={[styles.dropdownText, { color: colors.primary }]}>
+                                + Create "{bookSearch}"
+                              </Text>
+                          }
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )
+              )}
+
+              {/* Video */}
+              {sourceType === "video" && (
+                <>
+                  <TextInput
+                    style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
+                    value={videoTitle}
+                    onChangeText={setVideoTitle}
+                    placeholder="Title (optional)"
+                    placeholderTextColor={colors.mutedFg}
+                  />
+                  <TextInput
+                    style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
+                    value={videoUrl}
+                    onChangeText={setVideoUrl}
+                    placeholder="Link (optional)"
+                    placeholderTextColor={colors.mutedFg}
+                    keyboardType="url"
+                    autoCapitalize="none"
+                  />
+                </>
+              )}
+            </View>
+          )}
+
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -609,8 +603,6 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
               />
             )}
             <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>
-              {/* pointerEvents="none" ensures touches always hit the PanResponder view
-                  above, keeping locationX/Y in the container's coordinate space. */}
               {hasSelection && dragRect && (
                 <View style={StyleSheet.absoluteFill} pointerEvents="none">
                   <View
@@ -654,7 +646,10 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
 
           <View style={styles.annotFooter}>
             {hasSelection && (
-              <TouchableOpacity style={styles.annotClearBtn} onPress={() => { dragRectRef.current = null; setDragRect(null); }}>
+              <TouchableOpacity
+                style={styles.annotClearBtn}
+                onPress={() => { dragRectRef.current = null; setDragRect(null); }}
+              >
                 <Text style={styles.annotClearText}>Clear</Text>
               </TouchableOpacity>
             )}
@@ -708,10 +703,58 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     marginBottom: 14,
   },
+  saveBtn: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  saveBtnDisabled: { opacity: 0.4 },
+  saveBtnText: { fontSize: 16, fontWeight: "600" },
+  // Collapsible rows
+  collapseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  collapseLabel: { fontSize: 15, flex: 1, marginRight: 8 },
+  collapseBody: { paddingBottom: 14 },
+  // Source type pills
   pills: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 },
   pill: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 20 },
   pillText: { fontSize: 14 },
-  section: { gap: 10, marginBottom: 14 },
+  // Book selected state
+  selectedBookRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 4,
+  },
+  selectedBookChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+  },
+  selectedBookText: { fontSize: 14, fontWeight: "500", flex: 1 },
+  pageInputSmall: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    fontSize: 14,
+    width: 52,
+    textAlign: "center",
+  },
+  clearBookBtn: { padding: 4 },
+  // Book search
   input: {
     borderWidth: 1,
     borderRadius: 10,
@@ -719,9 +762,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 10,
   },
-  bookRow: { flexDirection: "row", gap: 8 },
-  bookInput: { flex: 7, marginBottom: 0 },
-  pageInput: { flex: 3, marginBottom: 0 },
   dropdown: {
     borderWidth: 1,
     borderRadius: 10,
@@ -731,17 +771,7 @@ const styles = StyleSheet.create({
   dropdownItem: { padding: 12, borderBottomWidth: 1 },
   dropdownText: { fontSize: 14 },
   dropdownSub: { fontSize: 12, marginTop: 2 },
-  tagList: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
-  tagChip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 },
-  tagChipText: { fontSize: 13 },
-  saveBtn: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  saveBtnDisabled: { opacity: 0.4 },
-  saveBtnText: { fontSize: 16, fontWeight: "600" },
+  // Candidate picker
   pickerOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -772,7 +802,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   pickerCancelText: { fontSize: 15, fontWeight: "500" },
-  // Annotation
+  // Annotation modal
   annotContainer: { flex: 1, backgroundColor: "#000" },
   annotHeader: {
     flexDirection: "row",

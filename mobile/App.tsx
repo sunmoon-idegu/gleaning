@@ -42,6 +42,7 @@ function AppTabs() {
           tabBarActiveTintColor: colors.tabActive,
           tabBarInactiveTintColor: colors.tabInactive,
           tabBarLabelStyle: { fontSize: 11 },
+          tabBarIconStyle: { marginBottom: 4 },
           tabBarStyle: {
             borderTopColor: colors.tabBorder,
             backgroundColor: colors.tabBg,

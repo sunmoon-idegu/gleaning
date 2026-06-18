@@ -51,6 +51,7 @@ export interface Book {
 export const LANGUAGES = [
   { code: "en", label: "English" },
   { code: "zh", label: "中文" },
+  { code: "ja", label: "日本語" },
 ] as const;
 
 export interface Source {

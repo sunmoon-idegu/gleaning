@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Search, BookOpen, List, HelpCircle } from "lucide-react";
+import { Search, BookOpen, List, HelpCircle, MessageSquare } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { ThemeToggle } from "./theme-toggle";
 import { SearchModal } from "./search-modal";
@@ -91,6 +91,11 @@ export function Nav() {
                     label="Help"
                     href="/help"
                     labelIcon={<HelpCircle size={16} />}
+                  />
+                  <UserButton.Link
+                    label="Send feedback"
+                    href="/feedback"
+                    labelIcon={<MessageSquare size={16} />}
                   />
                 </UserButton.MenuItems>
               </UserButton>

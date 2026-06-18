@@ -18,7 +18,14 @@ import { apiFetch, type Book } from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
 import BookDetail from "./BookDetailScreen";
 
-const LANG_ORDER = ["en", "zh", "ja", "ko", "fr", "de", "es", "pt", "it", "ru"];
+const LANG_OPTIONS: { code: string; label: string }[] = [
+  { code: "en", label: "English" },
+  { code: "zh", label: "中文" },
+  { code: "ja", label: "日本語" },
+];
+
+const LANG_ORDER = ["en", "zh", "ja", "ko", "fr", "de", "es", "pt", "it", "ru", "other"];
+
 const LANG_LABELS: Record<string, string> = {
   en: "English", zh: "Chinese", ja: "Japanese", ko: "Korean",
   fr: "French", de: "German", es: "Spanish", pt: "Portuguese",
@@ -189,14 +196,28 @@ export default function ShelfScreen() {
               placeholder="Author (optional)"
               placeholderTextColor={colors.mutedFg}
             />
-            <TextInput
-              style={[styles.modalInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.bg }]}
-              value={newLang}
-              onChangeText={setNewLang}
-              placeholder="Language code: en, zh, fr…"
-              placeholderTextColor={colors.mutedFg}
-              autoCapitalize="none"
-            />
+            <Text style={[styles.modalLabel, { color: colors.mutedFg }]}>Language (optional)</Text>
+            <View style={styles.langRow}>
+              {LANG_OPTIONS.map((opt) => {
+                const active = newLang === opt.code;
+                return (
+                  <TouchableOpacity
+                    key={opt.code}
+                    style={[
+                      styles.langChip,
+                      { borderColor: active ? colors.primary : colors.border },
+                      active && { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => setNewLang(active ? "" : opt.code)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.langChipText, { color: active ? colors.primaryFg : colors.mutedFg }]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <View style={styles.modalBtns}>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.modalBtnCancel, { borderColor: colors.border }]}
@@ -276,6 +297,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   modalTitle: { fontSize: 18, fontWeight: "600", marginBottom: 4 },
+  modalLabel: { fontSize: 12, fontWeight: "500", marginBottom: 4 },
+  langRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  langChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1.5 },
+  langChipText: { fontSize: 13, fontWeight: "500" },
   modalInput: {
     borderWidth: 1,
     borderRadius: 10,

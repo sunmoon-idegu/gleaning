@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { apiFetch, waitForToken, LANGUAGES, type Book, type Quote } from "@/lib/api";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageSelect } from "@/components/language-select";
 
-type SourceType = "book" | "video" | "live" | "unknown";
+type SourceType = "book" | "video" | null;
 
 interface AddQuoteModalProps {
   open: boolean;
@@ -29,15 +29,10 @@ export function AddQuoteModal({ open, prefillBookId = "", onClose, onAdded }: Ad
   const { getToken } = useAuth();
 
   const [text, setText] = useState("");
-  const [sourceType, setSourceType] = useState<SourceType>("book");
-  const [author, setAuthor] = useState("");
+  const [sourceType, setSourceType] = useState<SourceType>(null);
   const [page, setPage] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
-  const [liveSpeaker, setLiveSpeaker] = useState("");
-  const [liveContext, setLiveContext] = useState("");
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [bookId, setBookId] = useState(prefillBookId);
   const [bookSearch, setBookSearch] = useState("");
@@ -51,14 +46,12 @@ export function AddQuoteModal({ open, prefillBookId = "", onClose, onAdded }: Ad
   // Reset and load books when dialog opens
   useEffect(() => {
     if (!open) return;
-    setText(""); setAuthor(""); setPage("");
+    setText(""); setPage("");
     setVideoTitle(""); setVideoUrl("");
-    setLiveSpeaker(""); setLiveContext("");
-    setTagInput(""); setTags([]);
     setShowNewBook(false);
     setNewBookTitle(""); setNewBookAuthor(""); setNewBookLanguage("");
     setBookId(prefillBookId);
-    setSourceType("book");
+    setSourceType(prefillBookId ? "book" : null);
 
     (async () => {
       const token = await waitForToken(getToken);
@@ -76,17 +69,6 @@ export function AddQuoteModal({ open, prefillBookId = "", onClose, onAdded }: Ad
   const filteredBooks = books.filter((b) =>
     b.title.toLowerCase().includes(bookSearch.toLowerCase())
   );
-
-  function addTag(value: string) {
-    const trimmed = value.trim().toLowerCase();
-    if (trimmed && !tags.includes(trimmed)) setTags((t) => [...t, trimmed]);
-    setTagInput("");
-  }
-
-  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
-    else if (e.key === "Backspace" && !tagInput) setTags((t) => t.slice(0, -1));
-  }
 
   async function handleCreateBook() {
     if (!newBookTitle.trim() || creatingBook) return;
@@ -119,43 +101,21 @@ export function AddQuoteModal({ open, prefillBookId = "", onClose, onAdded }: Ad
         body: JSON.stringify({ type: "book", book_id: bookId }),
       });
       sourceId = src.id;
-    } else if (sourceType === "video" && videoTitle) {
+    } else if (sourceType === "video" && (videoTitle || videoUrl)) {
       const src = await apiFetch<{ id: string }>("/sources", token, {
         method: "POST",
-        body: JSON.stringify({ type: "video", title: videoTitle, url: videoUrl || null }),
+        body: JSON.stringify({ type: "video", title: videoTitle || null, url: videoUrl || null }),
       });
       sourceId = src.id;
-    } else if (sourceType === "live") {
-      const src = await apiFetch<{ id: string }>("/sources", token, {
-        method: "POST",
-        body: JSON.stringify({ type: "live", author: liveSpeaker || null, context: liveContext || null }),
-      });
-      sourceId = src.id;
-    } else if (sourceType === "unknown") {
-      const src = await apiFetch<{ id: string }>("/sources", token, {
-        method: "POST",
-        body: JSON.stringify({ type: "unknown" }),
-      });
-      sourceId = src.id;
-    }
-
-    const tagIds: string[] = [];
-    for (const name of tags) {
-      const tag = await apiFetch<{ id: string }>("/tags", token, {
-        method: "POST",
-        body: JSON.stringify({ name }),
-      });
-      tagIds.push(tag.id);
     }
 
     const quote = await apiFetch<Quote>("/quotes", token, {
       method: "POST",
       body: JSON.stringify({
         text: text.trim(),
-        author: author.trim() || null,
         page: page ? parseInt(page) : null,
         source_id: sourceId,
-        tag_ids: tagIds,
+        tag_ids: [],
       }),
     });
 
@@ -165,11 +125,9 @@ export function AddQuoteModal({ open, prefillBookId = "", onClose, onAdded }: Ad
     onClose();
   }
 
-  const sourceTypes: { value: SourceType; label: string }[] = [
+  const sourceTypes: { value: NonNullable<SourceType>; label: string }[] = [
     { value: "book", label: "Book" },
     { value: "video", label: "Video" },
-    { value: "live", label: "Live" },
-    { value: "unknown", label: "Unknown" },
   ];
 
   return (
@@ -194,12 +152,13 @@ export function AddQuoteModal({ open, prefillBookId = "", onClose, onAdded }: Ad
           />
 
           {/* Source type pills */}
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <span className="text-xs text-muted-foreground">Source:</span>
             {sourceTypes.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
-                onClick={() => setSourceType(value)}
+                onClick={() => setSourceType(sourceType === value ? null : value)}
                 className={`cursor-pointer px-3 py-1.5 rounded-full text-sm transition-colors ${
                   sourceType === value
                     ? "bg-primary text-primary-foreground"
@@ -286,41 +245,6 @@ export function AddQuoteModal({ open, prefillBookId = "", onClose, onAdded }: Ad
             </div>
           )}
 
-          {/* Live */}
-          {sourceType === "live" && (
-            <div className="flex gap-2">
-              <Input value={liveSpeaker} onChange={(e) => setLiveSpeaker(e.target.value)} placeholder="Speaker (optional)" className="flex-1" />
-              <Input value={liveContext} onChange={(e) => setLiveContext(e.target.value)} placeholder="Context (optional)" className="flex-1" />
-            </div>
-          )}
-
-          {/* Author */}
-          {sourceType === "unknown" && (
-            <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)" />
-          )}
-
-          {/* Tags */}
-          <div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {tags.map((t) => (
-                  <span key={t} className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    {t}
-                    <button type="button" className="cursor-pointer" onClick={() => setTags(tags.filter((x) => x !== t))}>
-                      <X size={10} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleTagKeyDown}
-              onBlur={() => addTag(tagInput)}
-              placeholder="Tags (comma or Enter to add)"
-            />
-          </div>
         </div>
 
         <DialogFooter className="items-center">
