@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from auth import verify_token
 from database import check_db
 from models import User
-from routers import books, quotes, sources, tags, search, ocr
+from routers import books, quotes, sources, tags, search, ocr, users, feedback
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,6 +48,8 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+app.include_router(users.router)
+app.include_router(feedback.router)
 app.include_router(books.router)
 app.include_router(quotes.router)
 app.include_router(sources.router)

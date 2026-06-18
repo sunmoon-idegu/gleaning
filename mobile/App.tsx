@@ -3,14 +3,17 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text, TouchableOpacity, StyleSheet, ActivityIndicator, View } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
+import { useEffect, useState } from "react";
 import { tokenCache } from "./src/tokenCache";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
+import { apiFetch, ApiError } from "./src/lib/api";
 import SignInScreen from "./src/screens/SignInScreen";
 import FeedScreen from "./src/screens/FeedScreen";
 import AddScreen from "./src/screens/AddScreen";
 import ShelfScreen from "./src/screens/ShelfScreen";
 import SearchScreen from "./src/screens/SearchScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
+import DeletedAccountScreen from "./src/screens/DeletedAccountScreen";
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const Tab = createBottomTabNavigator();
@@ -98,9 +101,40 @@ function AppTabs() {
 }
 
 function RootNavigator() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const [accountState, setAccountState] = useState<"checking" | "active" | "deleted">("checking");
+  const [deletedAt, setDeletedAt] = useState<string>("");
 
-  if (!isLoaded) {
+  useEffect(() => {
+    if (!isSignedIn) {
+      setAccountState("checking");
+      return;
+    }
+    getToken().then(async (token) => {
+      if (!token) { setAccountState("active"); return; }
+      try {
+        await apiFetch("/me", token);
+        setAccountState("active");
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 403) {
+          // Handle both old string format and new dict format
+          const detail = (err.body as any)?.detail;
+          const isDeleted =
+            detail?.code === "account_deleted" ||
+            (typeof detail === "string" && detail.toLowerCase().includes("deleted"));
+          if (isDeleted) {
+            setDeletedAt(detail?.deleted_at ?? "");
+            setAccountState("deleted");
+            return;
+          }
+        }
+        // Network error or unexpected — let them in, screens handle their own errors
+        setAccountState("active");
+      }
+    });
+  }, [isSignedIn]);
+
+  if (!isLoaded || (isSignedIn && accountState === "checking")) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator />
@@ -108,7 +142,18 @@ function RootNavigator() {
     );
   }
 
-  return isSignedIn ? <AppTabs /> : <SignInScreen />;
+  if (!isSignedIn) return <SignInScreen />;
+
+  if (accountState === "deleted") {
+    return (
+      <DeletedAccountScreen
+        deletedAt={deletedAt}
+        onRecovered={() => setAccountState("active")}
+      />
+    );
+  }
+
+  return <AppTabs />;
 }
 
 export default function App() {

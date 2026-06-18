@@ -1,16 +1,15 @@
-import * as Clipboard from "expo-clipboard";
 import Feather from "@expo/vector-icons/Feather";
+import * as Clipboard from "expo-clipboard";
 import { useRef, useState } from "react";
 import {
   PanResponder,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, FONT_SIZES } from "../context/ThemeContext";
 import { type Quote } from "../lib/api";
 
 function sourceLabel(quote: Quote): string | null {
@@ -33,7 +32,8 @@ interface Props {
 }
 
 export default function QuoteDetailScreen({ quote, onBack }: Props) {
-  const { colors } = useTheme();
+  const { colors, appFontSize } = useTheme();
+  const detailFontSize = FONT_SIZES[appFontSize].detail;
   const [copied, setCopied] = useState(false);
 
   const swipeBack = useRef(
@@ -44,16 +44,18 @@ export default function QuoteDetailScreen({ quote, onBack }: Props) {
     })
   ).current;
   const src = sourceLabel(quote);
-  const date = new Date(quote.created_at).toLocaleDateString(undefined, {
+  const date = new Date(quote.created_at).toLocaleString(undefined, {
     year: "numeric",
     month: "long",
     day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 
   async function handleCopy() {
     await Clipboard.setStringAsync(quote.text);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -73,7 +75,7 @@ export default function QuoteDetailScreen({ quote, onBack }: Props) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.quoteText, { color: colors.fg }]}>
+        <Text style={[styles.quoteText, { color: colors.fg, fontSize: detailFontSize, lineHeight: detailFontSize * 1.75 }]}>
           {quote.text}
         </Text>
 
@@ -104,23 +106,10 @@ export default function QuoteDetailScreen({ quote, onBack }: Props) {
           onPress={handleCopy}
           activeOpacity={0.7}
         >
-          <Feather
-            name={copied ? "check" : "copy"}
-            size={16}
-            color={copied ? "#22c55e" : colors.fg}
-          />
-          <Text style={[styles.actionLabel, { color: copied ? "#22c55e" : colors.fg }]}>
-            {copied ? "Copied!" : "Copy"}
+          <Feather name={copied ? "check" : "copy"} size={16} color={copied ? "#16a34a" : colors.fg} />
+          <Text style={[styles.actionLabel, { color: copied ? "#16a34a" : colors.fg }]}>
+            {copied ? "Copied" : "Copy"}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: colors.muted }]}
-          onPress={() => Share.share({ message: quote.text })}
-          activeOpacity={0.7}
-        >
-          <Feather name="share-2" size={16} color={colors.fg} />
-          <Text style={[styles.actionLabel, { color: colors.fg }]}>Share</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -147,8 +136,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   quoteText: {
-    fontSize: 20,
-    lineHeight: 34,
+    fontSize: 17,
+    lineHeight: 28,
     fontWeight: "400",
     marginBottom: 28,
   },

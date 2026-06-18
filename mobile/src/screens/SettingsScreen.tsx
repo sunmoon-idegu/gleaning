@@ -1,7 +1,48 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useRef, useState } from "react";
+import { Alert, Animated, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme, type ThemeMode, type FeedMode } from "../context/ThemeContext";
+import { useTheme, type ThemeMode, type SortOrder, type AppFontSize } from "../context/ThemeContext";
+import { apiFetch } from "../lib/api";
+import FeedbackScreen from "./FeedbackScreen";
+
+const APP_VERSION = "1.0.0";
+
+function Row({ label, value, colors }: { label: string; value?: string; colors: ReturnType<typeof useTheme>["colors"] }) {
+  return (
+    <View style={[styles.row, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.rowLabel, { color: colors.fg }]}>{label}</Text>
+      {value && <Text style={[styles.rowValue, { color: colors.mutedFg }]} numberOfLines={1}>{value}</Text>}
+    </View>
+  );
+}
+
+function SegmentControl<T extends string>({
+  options, value, onSelect, colors,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onSelect: (v: T) => void;
+  colors: ReturnType<typeof useTheme>["colors"];
+}) {
+  return (
+    <View style={styles.segmentRow}>
+      {options.map((o) => {
+        const active = value === o.value;
+        return (
+          <TouchableOpacity
+            key={o.value}
+            style={[styles.segBtn, { borderColor: active ? colors.primary : colors.border }, active && { backgroundColor: colors.primary }]}
+            onPress={() => onSelect(o.value)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.segText, { color: active ? colors.primaryFg : colors.mutedFg }]}>{o.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
 
 const THEMES: { value: ThemeMode; label: string }[] = [
   { value: "light", label: "Light" },
@@ -9,133 +50,161 @@ const THEMES: { value: ThemeMode; label: string }[] = [
   { value: "colorful", label: "Colorful" },
 ];
 
-const FEED_MODES: { value: FeedMode; label: string }[] = [
-  { value: "list", label: "List" },
-  { value: "card", label: "Card" },
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "random", label: "Random" },
+];
+
+const FONT_OPTIONS: { value: AppFontSize; label: string }[] = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
 ];
 
 export default function SettingsScreen() {
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const { user } = useUser();
-  const { theme, colors, setTheme, feedMode, setFeedMode } = useTheme();
+  const { theme, colors, setTheme, sortOrder, setSortOrder, appFontSize, setAppFontSize } = useTheme();
+  const { width } = useWindowDimensions();
+  const [showFeedback, setShowFeedback] = useState(false);
+  const slideAnim = useRef(new Animated.Value(width)).current;
+
+  function openFeedback() {
+    setShowFeedback(true);
+    slideAnim.setValue(width);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }
+
+  function closeFeedback() {
+    Animated.timing(slideAnim, {
+      toValue: width,
+      duration: 260,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => setShowFeedback(false));
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      "Delete Account",
+      "Your account will be permanently deleted in 30 days, including all quotes and data. You will be signed out immediately.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              if (token) await apiFetch("/users/me", token, { method: "DELETE" });
+            } catch {
+              // proceed to sign out even if request fails
+            }
+            signOut();
+          },
+        },
+      ]
+    );
+  }
 
   return (
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
-      <Text style={[styles.heading, { color: colors.fg }]}>Settings</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={[styles.heading, { color: colors.fg }]}>Settings</Text>
 
-      {/* Account */}
-      <Text style={[styles.section, { color: colors.mutedFg }]}>Account</Text>
-      <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.fg }]}>Email</Text>
-          <Text style={[styles.value, { color: colors.mutedFg }]} numberOfLines={1}>
-            {user?.primaryEmailAddress?.emailAddress}
-          </Text>
+        {/* Account */}
+        <Text style={[styles.section, { color: colors.mutedFg }]}>Account</Text>
+        <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+          <Row label="Email" value={user?.primaryEmailAddress?.emailAddress} colors={colors} />
         </View>
-      </View>
 
-      {/* Appearance */}
-      <Text style={[styles.section, { color: colors.mutedFg }]}>Appearance</Text>
-      <View style={styles.themeRow}>
-        {THEMES.map(({ value, label }) => {
-          const active = theme === value;
-          return (
-            <TouchableOpacity
-              key={value}
-              style={[
-                styles.themeBtn,
-                { borderColor: active ? colors.primary : colors.border },
-                active && { backgroundColor: colors.primary },
-              ]}
-              onPress={() => setTheme(value)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.themeBtnText, { color: active ? colors.primaryFg : colors.mutedFg }]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+        {/* Appearance */}
+        <Text style={[styles.section, { color: colors.mutedFg }]}>Appearance</Text>
+        <SegmentControl options={THEMES} value={theme} onSelect={setTheme} colors={colors} />
 
-      {/* Feed */}
-      <Text style={[styles.section, { color: colors.mutedFg }]}>Feed</Text>
-      <View style={styles.themeRow}>
-        {FEED_MODES.map(({ value, label }) => {
-          const active = feedMode === value;
-          return (
-            <TouchableOpacity
-              key={value}
-              style={[
-                styles.themeBtn,
-                { borderColor: active ? colors.primary : colors.border },
-                active && { backgroundColor: colors.primary },
-              ]}
-              onPress={() => setFeedMode(value)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.themeBtnText, { color: active ? colors.primaryFg : colors.mutedFg }]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+        {/* Feed */}
+        <Text style={[styles.section, { color: colors.mutedFg }]}>Feed</Text>
+        <Text style={[styles.subLabel, { color: colors.mutedFg }]}>Sort order</Text>
+        <SegmentControl options={SORT_OPTIONS} value={sortOrder} onSelect={setSortOrder} colors={colors} />
+        <Text style={[styles.subLabel, { color: colors.mutedFg }]}>Text size</Text>
+        <SegmentControl options={FONT_OPTIONS} value={appFontSize} onSelect={setAppFontSize} colors={colors} />
 
-      {/* Sign out */}
-      <TouchableOpacity style={styles.signOutBtn} onPress={() => signOut()}>
-        <Text style={styles.signOutText}>Sign out</Text>
-      </TouchableOpacity>
+        {/* Feedback */}
+        <Text style={[styles.section, { color: colors.mutedFg }]}>Support</Text>
+        <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+          <TouchableOpacity style={[styles.row, { borderBottomColor: "transparent" }]} onPress={openFeedback} activeOpacity={0.6}>
+            <Text style={[styles.rowLabel, { color: colors.fg }]}>Send feedback</Text>
+            <Text style={[styles.rowChevron, { color: colors.mutedFg }]}>›</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Copyright */}
-      <Text style={[styles.copyright, { color: colors.mutedFg }]}>© 2025 Gleaning</Text>
+        {/* About */}
+        <Text style={[styles.section, { color: colors.mutedFg }]}>About</Text>
+        <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+          <Row label="Version" value={APP_VERSION} colors={colors} />
+        </View>
+
+        {/* Sign out */}
+        <TouchableOpacity style={styles.signOutBtn} onPress={() => signOut()} activeOpacity={0.7}>
+          <Text style={styles.signOutText}>Sign out</Text>
+        </TouchableOpacity>
+
+        {/* Delete account */}
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} activeOpacity={0.7}>
+          <Text style={styles.deleteText}>Delete account</Text>
+        </TouchableOpacity>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={[styles.tagline, { color: colors.mutedFg }]}>Quotes. Keep the best. Nothing else.</Text>
+          <Text style={[styles.copyright, { color: colors.mutedFg }]}>© 2025 Gleaning</Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
+
+    {showFeedback && (
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: slideAnim }] }]}>
+        <FeedbackScreen onBack={closeFeedback} />
+      </Animated.View>
+    )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   container: { flex: 1 },
   heading: { fontSize: 22, fontWeight: "600", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-  section: {
-    fontSize: 13,
-    fontWeight: "500",
-    paddingHorizontal: 20,
-    paddingBottom: 6,
-    marginTop: 16,
-  },
-  card: {
-    marginHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
+  section: { fontSize: 13, fontWeight: "500", paddingHorizontal: 20, paddingBottom: 4, marginTop: 20 },
+  subLabel: { fontSize: 12, paddingHorizontal: 20, paddingBottom: 4, marginTop: 10 },
+  card: { marginHorizontal: 16, borderRadius: 12, borderWidth: 1, overflow: "hidden" },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  themeRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 8 },
-  label: { fontSize: 15 },
-  value: { fontSize: 14, maxWidth: "60%" },
-  themeBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    alignItems: "center",
-  },
-  themeBtnText: { fontSize: 13, fontWeight: "500" },
+  rowLabel: { fontSize: 15 },
+  rowValue: { fontSize: 14, maxWidth: "55%" },
+  rowChevron: { fontSize: 22, lineHeight: 26 },
+  segmentRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 4 },
+  segBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5, alignItems: "center" },
+  segText: { fontSize: 13, fontWeight: "500" },
   signOutBtn: {
-    marginHorizontal: 16,
-    marginTop: 24,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: "#fee2e2",
-    alignItems: "center",
+    marginHorizontal: 16, marginTop: 28, padding: 16,
+    borderRadius: 12, backgroundColor: "#fee2e2", alignItems: "center",
   },
   signOutText: { color: "#dc2626", fontWeight: "600", fontSize: 15 },
-  copyright: { fontSize: 12, textAlign: "center", marginTop: 32 },
+  deleteBtn: {
+    marginHorizontal: 16, marginTop: 10, padding: 14, alignItems: "center",
+  },
+  deleteText: { color: "#dc2626", fontSize: 14 },
+  footer: { alignItems: "center", paddingTop: 28, paddingBottom: 40, gap: 4 },
+  tagline: { fontSize: 13, fontStyle: "italic" },
+  copyright: { fontSize: 11 },
 });

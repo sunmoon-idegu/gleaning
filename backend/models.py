@@ -3,7 +3,7 @@ from sqlalchemy import (
     Column, Text, Integer, ForeignKey, UniqueConstraint,
     Index, DateTime
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.sql import func
 from sqlalchemy import text as sa_text
@@ -19,6 +19,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     clerk_id = Column(Text, unique=True, nullable=False)
     email = Column(Text, nullable=False)
+    preferences = Column(JSONB, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -88,3 +90,14 @@ class QuoteTag(Base):
 
     quote_id = Column(UUID(as_uuid=True), ForeignKey("quotes.id", ondelete="CASCADE"), primary_key=True)
     tag_id = Column(UUID(as_uuid=True), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True)
+
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    email = Column(Text, nullable=False)
+    category = Column(Text, nullable=True)   # e.g. "bug", "feature", "love", etc.
+    message = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

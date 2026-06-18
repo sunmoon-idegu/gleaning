@@ -1,5 +1,12 @@
 const API_URL = process.env.EXPO_PUBLIC_API_URL!;
 
+export class ApiError extends Error {
+  constructor(public status: number, public body: unknown, message: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   token: string,
@@ -14,8 +21,9 @@ export async function apiFetch<T>(
     },
   });
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`API error ${res.status}: ${text}`);
+    let body: unknown;
+    try { body = await res.json(); } catch { body = await res.text().catch(() => ""); }
+    throw new ApiError(res.status, body, `API error ${res.status}`);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

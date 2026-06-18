@@ -5,6 +5,29 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+# ── User / Preferences ─────────────────────────────────────────────────────
+
+class PreferencesUpdate(BaseModel):
+    theme: Optional[str] = None       # "light" | "dark" | "colorful"
+    feed_mode: Optional[str] = None   # "list" | "card"
+    sort_order: Optional[str] = None  # "newest" | "oldest" | "random"
+    font_size: Optional[str] = None   # "small" | "medium" | "large"
+
+
+class PreferencesOut(BaseModel):
+    theme: Optional[str] = None
+    feed_mode: Optional[str] = None
+    sort_order: Optional[str] = None
+    font_size: Optional[str] = None
+
+
+# ── Feedback ───────────────────────────────────────────────────────────────
+
+class FeedbackCreate(BaseModel):
+    category: Optional[str] = None
+    message: Optional[str] = None
+
+
 # ── Books ──────────────────────────────────────────────────────────────────
 
 class BookCreate(BaseModel):

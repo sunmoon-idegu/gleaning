@@ -67,11 +67,7 @@ def _fetch_clerk_email(clerk_id: str) -> str:
     return ""
 
 
-def verify_token(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    token = credentials.credentials
+def _resolve_user(token: str, db: Session, allow_deleted: bool = False) -> User:
     payload = None
     for force_refresh in (False, True):
         try:
@@ -81,7 +77,7 @@ def verify_token(
             key_data = next((k for k in jwks["keys"] if k["kid"] == kid), None)
             if key_data is None:
                 if not force_refresh:
-                    continue  # key not found — retry with fresh JWKS
+                    continue
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown signing key")
             signing_key = jwt.algorithms.RSAAlgorithm.from_jwk(key_data)
             payload = jwt.decode(
@@ -95,7 +91,7 @@ def verify_token(
             raise
         except Exception as e:
             if not force_refresh:
-                continue  # try once more with fresh JWKS
+                continue
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired token",
@@ -112,4 +108,28 @@ def verify_token(
         db.commit()
         db.refresh(user)
 
+    if not allow_deleted and user.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "account_deleted",
+                "deleted_at": user.deleted_at.isoformat(),
+            },
+        )
+
     return user
+
+
+def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    return _resolve_user(credentials.credentials, db, allow_deleted=False)
+
+
+def verify_token_any(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """Like verify_token but lets deleted accounts through (for the recover endpoint)."""
+    return _resolve_user(credentials.credentials, db, allow_deleted=True)
