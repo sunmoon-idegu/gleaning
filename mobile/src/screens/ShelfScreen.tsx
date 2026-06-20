@@ -33,9 +33,9 @@ const LANG_OPTIONS: { code: string; label: string }[] = [
 const LANG_ORDER = ["en", "zh", "ja", "ko", "fr", "de", "es", "pt", "it", "ru", "other"];
 
 const LANG_LABELS: Record<string, string> = {
-  en: "English", zh: "Chinese", ja: "Japanese", ko: "Korean",
-  fr: "French", de: "German", es: "Spanish", pt: "Portuguese",
-  it: "Italian", ru: "Russian",
+  en: "English", zh: "中文", ja: "日本語", ko: "한국어",
+  fr: "Français", de: "Deutsch", es: "Español", pt: "Português",
+  it: "Italiano", ru: "Русский",
 };
 
 function langLabel(code: string) {
@@ -117,9 +117,7 @@ export default function ShelfScreen() {
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, gs) =>
         (gs.moveX - gs.dx) < width * 0.35 && Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
-      onPanResponderMove: (_e, gs) => {
-        if (gs.dx > 0) slideAnim.setValue(gs.dx);
-      },
+      onPanResponderMove: Animated.event([null, { dx: slideAnim }], { useNativeDriver: true }),
       onPanResponderRelease: (_e, gs) => {
         if (gs.dx > width * 0.45 || gs.vx > 0.8) {
           closeDetail();

@@ -10,12 +10,14 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from auth import verify_token
-from database import check_db
+from database import check_db, create_tables
 from models import User
-from routers import books, quotes, sources, tags, search, ocr, users, feedback
+from routers import books, quotes, search, ocr, users, feedback
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+create_tables()
 
 _is_prod = os.environ.get("ENV") == "production"
 
@@ -52,8 +54,6 @@ app.include_router(users.router)
 app.include_router(feedback.router)
 app.include_router(books.router)
 app.include_router(quotes.router)
-app.include_router(sources.router)
-app.include_router(tags.router)
 app.include_router(search.router)
 app.include_router(ocr.router)
 
@@ -67,23 +67,6 @@ def health():
         content={"status": "ok" if ok else "degraded", "db": db_status},
     )
 
-
-@app.get("/rate-limit-status")
-def rate_limit_status():
-    """Expose slowapi storage stats to diagnose limit exhaustion."""
-    storage = limiter._storage
-    info: dict = {"backend": type(storage).__name__}
-    try:
-        # MemoryStorage exposes _storage dict; RedisStorage exposes .storage
-        raw = getattr(storage, "_storage", None) or getattr(storage, "storage", None)
-        if raw is not None:
-            info["active_keys"] = len(raw)
-            # Show the 20 most-used keys
-            top = sorted(raw.items(), key=lambda kv: int(kv[1]), reverse=True)[:20]
-            info["top_keys"] = [{"key": k, "count": int(v)} for k, v in top]
-    except Exception as e:
-        info["error"] = str(e)
-    return info
 
 
 @app.get("/me")

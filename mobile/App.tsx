@@ -20,18 +20,18 @@ import DeletedAccountScreen from "./src/screens/DeletedAccountScreen";
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const Tab = createBottomTabNavigator();
 
-function AddButton({ onPress, style }: { onPress: () => void; style?: object }) {
+function AddButton({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
   return (
-    <TouchableOpacity
-      style={[style, styles.addBtnOuter]}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <View style={[styles.addBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
+    <View style={styles.addBtnOuter}>
+      <TouchableOpacity
+        style={[styles.addBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+        onPress={onPress}
+        activeOpacity={0.85}
+      >
         <Feather name="plus" size={24} color={colors.primaryFg} />
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -80,7 +80,7 @@ function AppTabs() {
           options={{
             tabBarLabel: () => null,
             tabBarIcon: () => null,
-            tabBarButton: (props) => <AddButton onPress={() => props.onPress?.({} as never)} style={props.style as object} />,
+            tabBarButton: (props) => <AddButton onPress={() => props.onPress?.({} as never)} />,
           }}
         />
         <Tab.Screen
@@ -163,7 +163,6 @@ const styles = StyleSheet.create({
   },
   addBtnOuter: {
     flex: 1,
-    alignSelf: "stretch",
     alignItems: "center",
     justifyContent: "center",
   },

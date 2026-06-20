@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,32 +6,25 @@ from sqlalchemy.orm import Session, joinedload
 
 from auth import verify_token
 from database import get_db
-from models import Quote, QuoteTag, Source, Tag, User, Book
-from schemas import QuoteCreate, QuoteOut, QuoteUpdate, SourceOut, TagOut
+from models import Quote, Book, User
+from schemas import BookOut, QuoteCreate, QuoteOut, QuoteUpdate
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
 
 
 def _build_quote_out(q: Quote) -> QuoteOut:
-    source_out = SourceOut.model_validate(q.source) if q.source else None
-    tags_out = [TagOut.model_validate(t) for t in q.tags]
+    book_out = BookOut.model_validate(q.book) if q.book else None
     return QuoteOut(
-        id=q.id, text=q.text, author=q.author, page=q.page,
-        source_id=q.source_id, source=source_out, tags=tags_out,
-        created_at=q.created_at,
+        id=q.id, text=q.text,
+        source_type=q.source_type, book_id=q.book_id, book=book_out,
+        page=q.page, created_at=q.created_at,
     )
-
-
-def _set_tags(quote: Quote, tag_ids: Optional[List[UUID]], db: Session):
-    db.query(QuoteTag).filter(QuoteTag.quote_id == quote.id).delete()
-    for tag_id in (tag_ids or []):
-        db.add(QuoteTag(quote_id=quote.id, tag_id=tag_id))
 
 
 def _own_quote_or_404(quote_id: UUID, user: User, db: Session) -> Quote:
     q = (
         db.query(Quote)
-        .options(joinedload(Quote.source).joinedload(Source.book), joinedload(Quote.tags))
+        .options(joinedload(Quote.book))
         .filter(Quote.id == quote_id, Quote.user_id == user.id)
         .first()
     )
@@ -47,7 +40,7 @@ def list_quotes(
 ):
     quotes = (
         db.query(Quote)
-        .options(joinedload(Quote.source).joinedload(Source.book), joinedload(Quote.tags))
+        .options(joinedload(Quote.book))
         .filter(Quote.user_id == current_user.id)
         .order_by(Quote.created_at.desc())
         .all()
@@ -64,13 +57,11 @@ def create_quote(
     quote = Quote(
         user_id=current_user.id,
         text=body.text,
-        author=body.author,
+        source_type=body.source_type,
+        book_id=body.book_id,
         page=body.page,
-        source_id=body.source_id,
     )
     db.add(quote)
-    db.flush()
-    _set_tags(quote, body.tag_ids, db)
     db.commit()
     return _build_quote_out(_own_quote_or_404(quote.id, current_user, db))
 
@@ -94,14 +85,12 @@ def update_quote(
     quote = _own_quote_or_404(quote_id, current_user, db)
     if body.text is not None:
         quote.text = body.text
-    if body.author is not None:
-        quote.author = body.author
+    if body.source_type is not None:
+        quote.source_type = body.source_type
+    if body.book_id is not None:
+        quote.book_id = body.book_id
     if body.page is not None:
         quote.page = body.page
-    if body.source_id is not None:
-        quote.source_id = body.source_id
-    if body.tag_ids is not None:
-        _set_tags(quote, body.tag_ids, db)
     db.commit()
     return _build_quote_out(_own_quote_or_404(quote_id, current_user, db))
 

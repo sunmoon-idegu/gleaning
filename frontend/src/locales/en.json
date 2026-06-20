@@ -46,10 +46,9 @@
     "errorMessage": "Something went wrong — please try again.",
     "thankYouTitle": "Thank you!",
     "thankYouBody": "Your feedback has been received.",
-    "bug": "Something's broken",
     "feature": "Feature request",
-    "unclear": "Something's unclear",
     "love": "Love the app",
+    "bug": "Found a bug",
     "other": "Other"
   },
   "shelf": {

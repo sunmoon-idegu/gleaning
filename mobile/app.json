@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Gleaning",
-    "slug": "gleaning-mobile",
+    "slug": "gleaning",
     "version": "1.0.0",
     "scheme": "io.gleaning.app",
     "orientation": "portrait",
@@ -27,6 +27,18 @@
         }
       ],
       "expo-localization"
-    ]
+    ],
+    "android": {
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "io.gleaning.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "eafc582b-0ac2-477e-8553-9da44601ca56"
+      }
+    },
+    "owner": "yuming-team"
   }
 }

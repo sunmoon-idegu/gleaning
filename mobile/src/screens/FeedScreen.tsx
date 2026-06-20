@@ -22,10 +22,7 @@ import { useTheme, FONT_SIZES } from "../context/ThemeContext";
 import QuoteDetailScreen from "./QuoteDetailScreen";
 
 function sourceLabel(quote: Quote): string | null {
-  const s = quote.source;
-  if (!s) return null;
-  if (s.type === "book" && s.book) return s.book.title;
-  if (s.type === "video") return s.title;
+  if (quote.source_type === "book" && quote.book) return quote.book.title;
   return null;
 }
 
@@ -50,15 +47,6 @@ function ListQuoteItem({
       <Text style={[styles.listQuoteText, { color: colors.fg, fontSize }]}>{quote.text}</Text>
       <View style={styles.meta}>
         {src && <Text style={[styles.source, { color: colors.mutedFg }]}>{src}</Text>}
-        {quote.tags.length > 0 && (
-          <View style={styles.tags}>
-            {quote.tags.map((t) => (
-              <Text key={t.id} style={[styles.tag, { backgroundColor: colors.muted, color: colors.mutedFg }]}>
-                {t.name}
-              </Text>
-            ))}
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -87,15 +75,6 @@ function CardQuoteItem({
       <View style={styles.cardContent}>
         <Text style={[styles.cardQuoteText, { color: colors.fg, fontSize, lineHeight: fontSize * 1.7 }]}>{quote.text}</Text>
         {src && <Text style={[styles.cardSource, { color: colors.mutedFg }]}>{src}</Text>}
-        {quote.tags.length > 0 && (
-          <View style={styles.tags}>
-            {quote.tags.map((t) => (
-              <Text key={t.id} style={[styles.tag, { backgroundColor: colors.muted, color: colors.mutedFg }]}>
-                {t.name}
-              </Text>
-            ))}
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -160,9 +139,7 @@ export default function FeedScreen() {
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, gs) =>
         (gs.moveX - gs.dx) < width * 0.35 && Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
-      onPanResponderMove: (_e, gs) => {
-        if (gs.dx > 0) slideAnim.setValue(gs.dx);
-      },
+      onPanResponderMove: Animated.event([null, { dx: slideAnim }], { useNativeDriver: true }),
       onPanResponderRelease: (_e, gs) => {
         if (gs.dx > width * 0.45 || gs.vx > 0.8) {
           closeDetail();
@@ -284,6 +261,7 @@ export default function FeedScreen() {
               quote={selectedQuote}
               onBack={closeDetail}
               onDelete={() => setQuotes(prev => prev.filter(q => q.id !== selectedQuote.id))}
+              onUpdate={(updated) => { setQuotes(prev => prev.map(q => q.id === updated.id ? updated : q)); setSelectedQuote(updated); }}
             />
           </SafeAreaView>
         </Animated.View>

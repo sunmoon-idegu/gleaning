@@ -31,27 +31,11 @@ class Book(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title = Column(Text, nullable=False)
     author = Column(Text)
-    language = Column(Text)  # e.g. 'en', 'zh', 'ja', 'fr', 'other'
+    language = Column(Text)
     cover_url = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (UniqueConstraint("user_id", "title"),)
-
-
-class Source(Base):
-    __tablename__ = "sources"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    type = Column(Text, nullable=False)  # 'book' | 'video' | 'live' | 'unknown'
-    title = Column(Text)
-    author = Column(Text)
-    url = Column(Text)
-    context = Column(Text)
-    book_id = Column(UUID(as_uuid=True), ForeignKey("books.id", ondelete="SET NULL"))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    book = relationship("Book", foreign_keys=[book_id], lazy="select")
 
 
 class Quote(Base):
@@ -60,38 +44,20 @@ class Quote(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     text = Column(Text, nullable=False)
-    author = Column(Text)
+    source_type = Column(Text)  # 'book' | None — extensible
+    book_id = Column(UUID(as_uuid=True), ForeignKey("books.id", ondelete="SET NULL"))
     page = Column(Integer)
-    source_id = Column(UUID(as_uuid=True), ForeignKey("sources.id", ondelete="SET NULL"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    source = relationship("Source", foreign_keys=[source_id], lazy="select")
-    tags = relationship("Tag", secondary="quote_tags", lazy="select")
+    book = relationship("Book", foreign_keys=[book_id], lazy="select")
 
     __table_args__ = (
         Index(
             "quotes_text_search",
-            sa_text("to_tsvector('english', text)"),
+            sa_text("to_tsvector('simple', text)"),
             postgresql_using="gin",
         ),
     )
-
-
-class Tag(Base):
-    __tablename__ = "tags"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    name = Column(Text, nullable=False)
-
-    __table_args__ = (UniqueConstraint("user_id", "name"),)
-
-
-class QuoteTag(Base):
-    __tablename__ = "quote_tags"
-
-    quote_id = Column(UUID(as_uuid=True), ForeignKey("quotes.id", ondelete="CASCADE"), primary_key=True)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True)
 
 
 class Feedback(Base):
@@ -99,7 +65,6 @@ class Feedback(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    email = Column(Text, nullable=False)
-    category = Column(Text, nullable=True)   # e.g. "bug", "feature", "love", etc.
+    category = Column(Text, nullable=True)
     message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from auth import verify_token
 from database import get_db
-from models import Quote, Source, Tag, QuoteTag, User
-from schemas import QuoteOut, SearchResult, SourceOut, TagOut
+from models import Book, Quote, User
+from schemas import BookOut, QuoteOut, SearchResult
 
 router = APIRouter(prefix="/search", tags=["search"])
 
@@ -16,22 +16,19 @@ def search(
     db: Session = Depends(get_db),
     current_user: User = Depends(verify_token),
 ):
-    tsquery = func.plainto_tsquery("english", q)
-    tsvector = func.to_tsvector("english", Quote.text)
+    tsquery = func.plainto_tsquery("simple", q)
+    tsvector = func.to_tsvector("simple", Quote.text)
 
     quotes = (
         db.query(Quote)
-        .options(joinedload(Quote.source), joinedload(Quote.tags))
-        .outerjoin(Quote.source)
-        .outerjoin(Quote.tags)
+        .options(joinedload(Quote.book))
+        .outerjoin(Quote.book)
         .filter(
             Quote.user_id == current_user.id,
             or_(
                 tsvector.op("@@")(tsquery),
-                Source.title.ilike(f"%{q}%"),
-                Source.author.ilike(f"%{q}%"),
-                Quote.author.ilike(f"%{q}%"),
-                Tag.name.ilike(f"%{q}%"),
+                Book.title.ilike(f"%{q}%"),
+                Book.author.ilike(f"%{q}%"),
             ),
         )
         .distinct()
@@ -39,14 +36,13 @@ def search(
         .all()
     )
 
-    results = []
-    for quote in quotes:
-        source_out = SourceOut.model_validate(quote.source) if quote.source else None
-        tags_out = [TagOut.model_validate(t) for t in quote.tags]
-        results.append(QuoteOut(
-            id=quote.id, text=quote.text, author=quote.author, page=quote.page,
-            source_id=quote.source_id, source=source_out, tags=tags_out,
-            created_at=quote.created_at,
-        ))
-
+    results = [
+        QuoteOut(
+            id=q.id, text=q.text,
+            source_type=q.source_type, book_id=q.book_id,
+            book=BookOut.model_validate(q.book) if q.book else None,
+            page=q.page, created_at=q.created_at,
+        )
+        for q in quotes
+    ]
     return SearchResult(quotes=results)

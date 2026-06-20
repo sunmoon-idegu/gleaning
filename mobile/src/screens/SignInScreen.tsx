@@ -1,12 +1,15 @@
 import { useOAuth } from "@clerk/clerk-expo";
-import { Text, TouchableOpacity, View, StyleSheet, ActivityIndicator } from "react-native";
+import { Image, Text, TouchableOpacity, View, StyleSheet, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "../context/ThemeContext";
 
 export default function SignInScreen() {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   async function handleSignIn() {
     setLoading(true);
@@ -23,49 +26,63 @@ export default function SignInScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Gleaning</Text>
-      <Text style={styles.subtitle}>{t("signIn.subtitle")}</Text>
-      <TouchableOpacity style={styles.button} onPress={handleSignIn} disabled={loading}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["bottom"]}>
+      <View style={styles.content}>
+        <View style={styles.brand}>
+          <Image source={require("../../assets/favicon.png")} style={styles.logo} />
+          <Text style={[styles.title, { color: colors.fg }]}>Gleaning</Text>
+        </View>
+        <Text style={[styles.subtitle, { color: colors.mutedFg }]}>{t("signIn.subtitle")}</Text>
+      </View>
+      <TouchableOpacity style={[styles.button, { backgroundColor: colors.fg }]} onPress={handleSignIn} disabled={loading}>
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.bg} />
         ) : (
-          <Text style={styles.buttonText}>{t("signIn.button")}</Text>
+          <Text style={[styles.buttonText, { color: colors.bg }]}>{t("signIn.button")}</Text>
         )}
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    alignItems: "center",
+    paddingHorizontal: 32,
+    paddingBottom: 64,
+  },
+  content: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 32,
+  },
+  brand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 8,
+  },
+  logo: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
   },
   title: {
     fontSize: 36,
     fontWeight: "600",
-    marginBottom: 8,
-    color: "#111",
   },
   subtitle: {
     fontSize: 16,
-    color: "#888",
-    marginBottom: 48,
+    marginTop: 20,
   },
   button: {
-    backgroundColor: "#111",
     paddingVertical: 14,
-    paddingHorizontal: 32,
     borderRadius: 12,
-    minWidth: 200,
+    alignSelf: "stretch",
     alignItems: "center",
   },
   buttonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "500",
   },

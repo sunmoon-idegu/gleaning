@@ -46,10 +46,9 @@
     "errorMessage": "出現錯誤，請重試。",
     "thankYouTitle": "謝謝！",
     "thankYouBody": "您的意見回饋已收到。",
-    "bug": "出了點問題",
     "feature": "功能請求",
-    "unclear": "有些不清楚",
     "love": "很喜歡這個應用程式",
+    "bug": "發現錯誤",
     "other": "其他"
   },
   "shelf": {

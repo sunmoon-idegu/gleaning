@@ -3,13 +3,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from auth import verify_token
 from database import get_db
-from models import Book, Quote, Source, User
-from schemas import BookCreate, BookOut, BookUpdate, BookWithQuotes, QuoteOut, SourceOut, TagOut
-from sqlalchemy.orm import joinedload
+from models import Book, Quote, User
+from schemas import BookCreate, BookOut, BookUpdate, BookWithQuotes, QuoteOut
 
 router = APIRouter(prefix="/books", tags=["books"])
 
@@ -41,7 +40,7 @@ def create_book(
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="A book with this title already exists.")
+        raise HTTPException(status_code=409, detail="Book already exists")
     db.refresh(book)
     return book
 
@@ -56,22 +55,20 @@ def get_book(
 
     raw_quotes = (
         db.query(Quote)
-        .options(joinedload(Quote.source).joinedload(Source.book), joinedload(Quote.tags))
-        .join(Source, Quote.source_id == Source.id)
-        .filter(Quote.user_id == current_user.id, Source.book_id == book_id)
+        .filter(Quote.user_id == current_user.id, Quote.book_id == book_id)
         .order_by(Quote.page.nullslast(), Quote.created_at)
         .all()
     )
 
-    quotes_out = []
-    for q in raw_quotes:
-        source_out = SourceOut.model_validate(q.source) if q.source else None
-        tags_out = [TagOut.model_validate(t) for t in q.tags]
-        quotes_out.append(QuoteOut(
-            id=q.id, text=q.text, author=q.author, page=q.page,
-            source_id=q.source_id, source=source_out, tags=tags_out,
-            created_at=q.created_at,
-        ))
+    book_out = BookOut.model_validate(book)
+    quotes_out = [
+        QuoteOut(
+            id=q.id, text=q.text,
+            source_type=q.source_type, book_id=q.book_id, book=book_out,
+            page=q.page, created_at=q.created_at,
+        )
+        for q in raw_quotes
+    ]
 
     result = BookWithQuotes.model_validate(book)
     result.quotes = quotes_out
@@ -92,11 +89,7 @@ def update_book(
         book.author = body.author
     if body.language is not None:
         book.language = body.language
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=409, detail="A book with this title already exists.")
+    db.commit()
     db.refresh(book)
     return book
 
@@ -108,11 +101,6 @@ def delete_book(
     current_user: User = Depends(verify_token),
 ):
     book = _own_book_or_404(book_id, current_user, db)
-    source_ids = [
-        s.id for s in db.query(Source.id).filter(Source.book_id == book_id).all()
-    ]
-    if source_ids:
-        db.query(Quote).filter(Quote.source_id.in_(source_ids)).delete(synchronize_session=False)
-        db.query(Source).filter(Source.id.in_(source_ids)).delete(synchronize_session=False)
+    db.query(Quote).filter(Quote.book_id == book_id, Quote.user_id == current_user.id).delete()
     db.delete(book)
     db.commit()

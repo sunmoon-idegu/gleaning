@@ -20,12 +20,9 @@
     "addSource": "+ 出典を追加",
     "fromSource": "出典：{{title}}",
     "sourceBook": "本",
-    "sourceVideo": "動画",
     "searchBooks": "本棚から検索、または新しい本を追加",
     "createBook": "+ 「{{title}}」を作成",
     "newBook": "新しい本",
-    "videoTitle": "タイトル（任意）",
-    "videoLink": "リンク（任意）",
     "page": "p.",
     "markQuote": "引用をマーク",
     "dragHint": "ドラッグして選択・ボックスを移動・角をリサイズ",
@@ -111,10 +108,9 @@
     "thankYouTitle": "ありがとうございます！",
     "thankYouBody": "フィードバックを受け取りました。",
     "done": "完了",
-    "bug": "バグの報告",
     "feature": "機能リクエスト",
-    "unclear": "わかりにくい点がある",
     "love": "アプリが好き",
+    "bug": "バグを見つけた",
     "other": "その他"
   },
   "search": {
@@ -130,7 +126,8 @@
     "deleteTitle": "引用を削除",
     "deleteMessage": "この引用は完全に削除されます。",
     "deleteConfirm": "削除",
-    "deleteFailed": "引用を削除できませんでした。再試行してください。"
+    "deleteFailed": "引用を削除できませんでした。再試行してください。",
+    "saveFailed": "変更を保存できませんでした。再試行してください。"
   },
   "deleted": {
     "title": "アカウント削除\n予定",

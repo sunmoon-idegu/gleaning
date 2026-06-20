@@ -20,7 +20,6 @@ def submit_feedback(
 
     entry = Feedback(
         user_id=current_user.id,
-        email=current_user.email,
         category=body.category,
         message=body.message.strip() if body.message else None,
     )

@@ -37,7 +37,6 @@ def create_source(
         title=body.title,
         author=body.author,
         url=body.url,
-        context=body.context,
         book_id=body.book_id,
     )
     db.add(source)

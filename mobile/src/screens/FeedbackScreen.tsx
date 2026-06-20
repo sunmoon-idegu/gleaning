@@ -4,20 +4,18 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
-  Keyboard,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { apiFetch } from "../lib/api";
 
-const PRESET_IDS = ["bug", "feature", "unclear", "love", "other"] as const;
+const PRESET_IDS = ["feature", "love", "bug", "other"] as const;
 
 interface Props {
   onBack: () => void;
@@ -76,11 +74,11 @@ export default function FeedbackScreen({ onBack }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
@@ -135,7 +133,6 @@ export default function FeedbackScreen({ onBack }: Props) {
               <Text style={[styles.charCount, { color: colors.mutedFg }]}>{t("feedback.charCount", { count: text.length })}</Text>
             </View>
           </ScrollView>
-        </TouchableWithoutFeedback>
 
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <TouchableOpacity

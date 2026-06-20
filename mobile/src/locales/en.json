@@ -20,12 +20,9 @@
     "addSource": "+ Add source",
     "fromSource": "From: {{title}}",
     "sourceBook": "Book",
-    "sourceVideo": "Video",
     "searchBooks": "Search shelf or add new book",
     "createBook": "+ Create \"{{title}}\"",
     "newBook": "New book",
-    "videoTitle": "Title (optional)",
-    "videoLink": "Link (optional)",
     "page": "p.",
     "markQuote": "Mark your quote",
     "dragHint": "Drag to select · move box · drag corners to resize",
@@ -111,10 +108,9 @@
     "thankYouTitle": "Thank you!",
     "thankYouBody": "Your feedback has been received.",
     "done": "Done",
-    "bug": "Something's broken",
     "feature": "Feature request",
-    "unclear": "Something's unclear",
     "love": "Love the app",
+    "bug": "Found a bug",
     "other": "Other"
   },
   "search": {
@@ -130,7 +126,8 @@
     "deleteTitle": "Delete Quote",
     "deleteMessage": "This quote will be permanently deleted.",
     "deleteConfirm": "Delete",
-    "deleteFailed": "Could not delete quote. Try again."
+    "deleteFailed": "Could not delete quote. Try again.",
+    "saveFailed": "Could not save changes. Try again."
   },
   "deleted": {
     "title": "Account scheduled\nfor deletion",
@@ -141,7 +138,7 @@
     "errorMessage": "The grace period may have passed, or there was a network error."
   },
   "signIn": {
-    "subtitle": "Capture what's worth keeping.",
+    "subtitle": "Quotes. Keep the best. Nothing else.",
     "button": "Sign in with Google"
   },
   "common": {

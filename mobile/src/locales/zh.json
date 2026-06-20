@@ -20,12 +20,9 @@
     "addSource": "+ 新增來源",
     "fromSource": "來自：{{title}}",
     "sourceBook": "書籍",
-    "sourceVideo": "影片",
     "searchBooks": "搜尋書架或新增書籍",
     "createBook": "+ 建立「{{title}}」",
     "newBook": "新書籍",
-    "videoTitle": "標題（選填）",
-    "videoLink": "連結（選填）",
     "page": "頁",
     "markQuote": "標記摘錄",
     "dragHint": "拖動選取 · 移動框 · 拖角調整大小",
@@ -111,10 +108,9 @@
     "thankYouTitle": "謝謝！",
     "thankYouBody": "您的意見回饋已收到。",
     "done": "完成",
-    "bug": "出了點問題",
     "feature": "功能請求",
-    "unclear": "有些不清楚",
     "love": "很喜歡這個應用程式",
+    "bug": "發現錯誤",
     "other": "其他"
   },
   "search": {
@@ -130,7 +126,8 @@
     "deleteTitle": "刪除摘錄",
     "deleteMessage": "此摘錄將永久刪除。",
     "deleteConfirm": "刪除",
-    "deleteFailed": "無法刪除摘錄，請重試。"
+    "deleteFailed": "無法刪除摘錄，請重試。",
+    "saveFailed": "無法儲存變更，請重試。"
   },
   "deleted": {
     "title": "帳戶已排定\n刪除",
@@ -141,7 +138,7 @@
     "errorMessage": "寬限期可能已過，或出現網路錯誤。"
   },
   "signIn": {
-    "subtitle": "保存值得珍藏的句子。",
+    "subtitle": "碰到你的，留下。",
     "button": "使用 Google 登入"
   },
   "common": {

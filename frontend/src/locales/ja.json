@@ -46,10 +46,9 @@
     "errorMessage": "エラーが発生しました。再試行してください。",
     "thankYouTitle": "ありがとうございます！",
     "thankYouBody": "フィードバックを受け取りました。",
-    "bug": "バグの報告",
     "feature": "機能リクエスト",
-    "unclear": "わかりにくい点がある",
     "love": "アプリが好き",
+    "bug": "バグを見つけた",
     "other": "その他"
   },
   "shelf": {

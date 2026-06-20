@@ -109,35 +109,40 @@ They are recommending a book, writing something, or returning to a thinker they 
 
 ## Core Concepts
 
-### Source
-Where a quote came from. A source is optional — sometimes you don't know or don't care.
-
-| Source Type | Fields                              | Example                          |
-|-------------|-------------------------------------|----------------------------------|
-| `book`      | title, author (optional), page (optional) | *Meditations*, Marcus Aurelius, p.42 |
-| `video`     | title (optional), url (optional)    | YouTube talk, documentary        |
-
-Books are the primary source type and get first-class treatment (dedicated shelf view).
-
-### Book
-A book has its own record separate from a source, enabling the shelf view and quote grouping.
-
-| Field      | Type   | Required | Notes                          |
-|------------|--------|----------|--------------------------------|
-| title      | string | yes      |                                |
-| author     | string | no       |                                |
-| language   | enum   | no       | `en`, `zh`, or `ja`            |
-| cover_url  | string | no       | URL to a cover image           |
-
 ### Quote
 A sentence or paragraph worth keeping.
 
-| Field      | Type     | Required | Notes                                    |
-|------------|----------|----------|------------------------------------------|
-| text       | string   | yes      | The quote itself                         |
-| source     | Source   | no       | Where it came from (book or video)       |
-| page       | integer  | no       | Page number (books only)                 |
-| created_at | date     | auto     | When it was entered                      |
+| Field        | Type    | Required | Notes                                   |
+|--------------|---------|----------|-----------------------------------------|
+| text         | string  | yes      | The quote itself                        |
+| source_type  | string  | no       | Discriminator: `'book'` or null (extensible) |
+| book_id      | UUID    | no       | Set when source_type is `'book'`        |
+| page         | integer | no       | Page number within the book             |
+| created_at   | date    | auto     | When it was entered                     |
+
+### Book
+A first-class entity. Multiple quotes can reference the same book.
+
+| Field     | Type   | Required | Notes                       |
+|-----------|--------|----------|-----------------------------|
+| title     | string | yes      |                             |
+| author    | string | no       |                             |
+| language  | enum   | no       | `en`, `zh`, or `ja`         |
+| cover_url | string | no       | Reserved for future use     |
+
+### Source (Phase 1)
+Phase 1 supports **book** as the only source type. The schema uses a `source_type` discriminator on quotes directly — no separate sources table — keeping the data model flat and the join count low.
+
+### Source (Phase 2 — planned)
+Future source types to be added without breaking the quotes table:
+
+| Type    | Fields                          | Example                            |
+|---------|---------------------------------|------------------------------------|
+| `book`  | book_id → books, page           | *Meditations*, p.42                |
+| `video` | video_id → videos, title, url, creator | YouTube talk, documentary   |
+| `post`  | post_id → posts, url, creator   | TikTok, Instagram, Twitter/X quote |
+
+Each new type gets its own table (e.g. `videos`, `posts`) and a new nullable FK on quotes. `source_type` disambiguates which FK is set. Existing book quotes are unaffected.
 
 ---
 
@@ -145,9 +150,8 @@ A sentence or paragraph worth keeping.
 
 ### 1. Quote Entry (primary action — must be fast)
 - **Text** is the only required field — Save is always available once text is entered
-- Source is optional enrichment added after or alongside saving:
+- Source is optional enrichment:
   - **Book:** searchable dropdown of existing books + optional page number; create a new book inline (title required, author and language optional)
-  - **Video:** optional title + optional URL
 - Submit with ⌘↵ (no mouse required)
 - Global shortcut **⌘E** opens the add-quote modal from anywhere in the app
 
@@ -162,11 +166,11 @@ A sentence or paragraph worth keeping.
 
 ### 2a. Quote Detail Page (`/quotes/[id]`)
 - Dedicated URL for each quote — bookmarkable, shareable
-- Shows: full quote text, source, tags, creation date
+- Shows: full quote text, source, creation date
 - Actions: Copy (browser clipboard), Edit (inline dialog), Delete
 
 ### 3. Shelf (Browse by Book)
-- Grid of all books grouped by language, with quote counts
+- Grid of all books grouped by language
 - "Add book" button opens a modal dialog (title, optional author, optional language)
 - Each book card has an overflow menu (⋯) to edit or delete the book
 - Tap a book → quotes sorted by page number
@@ -174,11 +178,11 @@ A sentence or paragraph worth keeping.
 
 ### 4. Keyword Search
 - Single search bar, always accessible via **⌘K**
-- Searches across: quote text, source title, author
-- Results show quote excerpt + source + author
+- Searches across: quote text, book title, book author
+- Results show quote excerpt + book
 
 ### 5. Source Management
-- Sources are created inline during quote entry
+- Sources are set inline during quote entry (book selection + page)
 
 ---
 
@@ -205,7 +209,7 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 3. Draw a selection box over the text region (draggable, resizable via corner handles)
 4. Claude extracts all readable sentences from the selection
 5. User taps the sentence they want
-6. Pre-fills quote text → user confirms source/tags → save
+6. Pre-fills quote text → user confirms source → save
 
 ### Mobile screens
 | Screen | Description |
@@ -214,7 +218,7 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 | Quote Detail | Full quote with Copy action; swipe left edge to go back |
 | Shelf | Books grouped by language; tap book → quotes by page |
 | Add | Manual entry + camera/library OCR capture |
-| Search | Full-text search across quotes, sources, tags |
+| Search | Full-text search across quotes and book titles |
 | Settings | Theme, feed display mode, sort order, font size — all synced to account via API |
 | Feedback | Category chips + freeform text; submits to `feedback` table in DB |
 
@@ -241,7 +245,7 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 | `DELETE /users/me` | Soft-deletes account: sets `deleted_at`; data purged after 30 days |
 | `POST /users/me/recover` | Cancels a pending deletion within the 30-day grace period |
 | `POST /users/purge-deleted` | Hard-deletes expired accounts (called by daily cron with secret header) |
-| `POST /feedback` | Saves a feedback entry (category + message + user email) to the `feedback` table |
+| `POST /feedback` | Saves a feedback entry (category + message) to the `feedback` table |
 
 ---
 
@@ -255,6 +259,7 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 - Public profiles
 - Social / sharing features
 - Auto-detect book from photo (v2)
+- Video and social media sources (Phase 2)
 
 ---
 
@@ -286,3 +291,4 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 - [x] Quotes do not support images.
 - [x] Multiple editions with different page numbers are out of scope — page numbers are best-effort metadata only.
 - [x] Tags are out of scope for now. May be added in a future version.
+- [x] Source types beyond `book` (video, social media posts) are out of scope for Phase 1. The discriminator pattern on quotes makes them addable without schema changes to existing tables.

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle } from "lucide-react";
 
-const PRESET_IDS = ["bug", "feature", "unclear", "love", "other"] as const;
+const PRESET_IDS = ["feature", "love", "bug", "other"] as const;
 
 export default function FeedbackPage() {
   const { getToken } = useAuth();

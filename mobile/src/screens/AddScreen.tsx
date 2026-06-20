@@ -35,8 +35,6 @@ function detectLang(text: string): "en" | "zh" | "ja" | null {
   return null;
 }
 
-type SourceType = "book" | "video" | null;
-
 interface AddScreenProps {
   onAdded?: () => void;
 }
@@ -75,14 +73,12 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
   const navigation = useNavigation();
 
   const [text, setText] = useState("");
-  const [sourceType, setSourceType] = useState<SourceType>(null);
   const [sourceOpen, setSourceOpen] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [bookSearch, setBookSearch] = useState("");
   const [bookId, setBookId] = useState("");
   const [page, setPage] = useState("");
-  const [videoTitle, setVideoTitle] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
+  const scrollViewRef = useRef<ScrollView>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [candidates, setCandidates] = useState<string[]>([]);
@@ -197,6 +193,12 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
     b.title.toLowerCase().includes(bookSearch.toLowerCase())
   );
 
+  useEffect(() => {
+    if (filteredBooks.length > 0 && sourceOpen) {
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 50);
+    }
+  }, [filteredBooks.length, bookSearch]);
+
   async function captureFromImage(fromCamera: boolean) {
     if (fromCamera) {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -273,53 +275,38 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
       const token = await getToken();
       if (!token) throw new Error("No token");
 
-      let sourceId: string | null = null;
-
-      if (sourceType === "book" && bookSearch.trim()) {
-        let resolvedBookId = bookId;
-        if (!resolvedBookId) {
-          try {
-            const newBook = await apiFetch<Book>("/books", token, {
-              method: "POST",
-              body: JSON.stringify({ title: bookSearch.trim(), language: detectLang(bookSearch.trim()) }),
-            });
-            setBooks((prev) => [...prev, newBook]);
-            resolvedBookId = newBook.id;
-          } catch (err) {
-            if (err instanceof ApiError && err.status === 409) {
-              const existing = books.find(
-                (b) => b.title.toLowerCase() === bookSearch.trim().toLowerCase()
-              );
-              if (existing) resolvedBookId = existing.id;
-            }
-            if (!resolvedBookId) throw err;
+      let resolvedBookId = bookId;
+      if (bookSearch.trim() && !resolvedBookId) {
+        try {
+          const newBook = await apiFetch<Book>("/books", token, {
+            method: "POST",
+            body: JSON.stringify({ title: bookSearch.trim(), language: detectLang(bookSearch.trim()) }),
+          });
+          setBooks((prev) => [...prev, newBook]);
+          resolvedBookId = newBook.id;
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 409) {
+            const existing = books.find(
+              (b) => b.title.toLowerCase() === bookSearch.trim().toLowerCase()
+            );
+            if (existing) resolvedBookId = existing.id;
           }
+          if (!resolvedBookId) throw err;
         }
-        const src = await apiFetch<{ id: string }>("/sources", token, {
-          method: "POST",
-          body: JSON.stringify({ type: "book", book_id: resolvedBookId }),
-        });
-        sourceId = src.id;
-      } else if (sourceType === "video" && (videoTitle || videoUrl)) {
-        const src = await apiFetch<{ id: string }>("/sources", token, {
-          method: "POST",
-          body: JSON.stringify({ type: "video", title: videoTitle || null, url: videoUrl || null }),
-        });
-        sourceId = src.id;
       }
 
       await apiFetch<Quote>("/quotes", token, {
         method: "POST",
         body: JSON.stringify({
           text: text.trim(),
+          source_type: resolvedBookId ? "book" : null,
+          book_id: resolvedBookId || null,
           page: page ? parseInt(page) : null,
-          source_id: sourceId,
-          tag_ids: [],
         }),
       });
 
-      setText(""); setSourceType(null); setSourceOpen(false);
-      setBookSearch(""); setBookId(""); setPage(""); setVideoTitle(""); setVideoUrl("");
+      setText(""); setSourceOpen(false);
+      setBookSearch(""); setBookId(""); setPage("");
       onAdded?.();
       navigation.navigate("Feed" as never);
     } catch {
@@ -329,17 +316,6 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
     }
   }
 
-  const sourceTypes: { value: SourceType; label: string }[] = [
-    { value: "book", label: t("add.sourceBook") },
-    { value: "video", label: t("add.sourceVideo") },
-  ];
-
-  const sourceCollapsedLabel = (() => {
-    if (!sourceType) return null;
-    if (sourceType === "book" && bookSearch) return bookSearch;
-    if (sourceType === "video") return videoTitle || videoUrl || t("add.sourceVideo");
-    return null;
-  })();
 
   const hasSelection = dragRect !== null && dragRect.w > 10 && dragRect.h > 10;
 
@@ -350,6 +326,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
@@ -404,135 +381,71 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
           {/* Source (collapsible) */}
           <TouchableOpacity
             style={[styles.collapseRow, { borderTopColor: colors.border }]}
-            onPress={() => setSourceOpen(!sourceOpen)}
+            onPress={() => {
+              const next = !sourceOpen;
+              setSourceOpen(next);
+              if (next) setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 50);
+            }}
             activeOpacity={0.7}
           >
-            <Text
-              style={[styles.collapseLabel, { color: sourceCollapsedLabel ? colors.fg : colors.mutedFg }]}
-              numberOfLines={1}
-            >
-              {sourceCollapsedLabel ? t("add.fromSource", { title: sourceCollapsedLabel }) : t("add.addSource")}
+            <Text style={[styles.collapseLabel, { color: bookSearch ? colors.fg : colors.mutedFg }]} numberOfLines={1}>
+              {bookSearch ? t("add.fromSource", { title: bookSearch }) : t("add.addSource")}
             </Text>
             <Feather name={sourceOpen ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedFg} />
           </TouchableOpacity>
 
           {sourceOpen && (
             <View style={styles.collapseBody}>
-              {/* Source type pills */}
-              <View style={styles.pills}>
-                {sourceTypes.map(({ value, label }) => (
-                  <TouchableOpacity
-                    key={value}
-                    style={[
-                      styles.pill,
-                      { backgroundColor: colors.muted },
-                      sourceType === value && { backgroundColor: colors.primary },
-                    ]}
-                    onPress={() => {
-                      if (sourceType === value) {
-                        setSourceType(null);
-                        setBookSearch(""); setBookId(""); setPage("");
-                        setVideoTitle(""); setVideoUrl("");
-                      } else {
-                        setSourceType(value);
-                      }
-                    }}
-                  >
-                    <Text style={[
-                      styles.pillText,
-                      { color: colors.mutedFg },
-                      sourceType === value && { color: colors.primaryFg },
-                    ]}>
-                      {label}
-                    </Text>
+              {bookId ? (
+                // Selected: book name + page + clear all on one row
+                <View style={[styles.selectedCard, { borderColor: colors.border, backgroundColor: colors.cardBg }]}>
+                  <Feather name="book" size={14} color={colors.mutedFg} style={{ marginTop: 2 }} />
+                  <Text style={[styles.selectedCardTitle, { color: colors.fg }]}>{bookSearch}</Text>
+                  <TextInput
+                    style={[styles.pageInput, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.bg }]}
+                    value={page}
+                    onChangeText={(v) => setPage(v.replace(/\D/g, ""))}
+                    placeholder={t("add.page")}
+                    placeholderTextColor={colors.mutedFg}
+                    keyboardType="numeric"
+                  />
+                  <TouchableOpacity onPress={() => { setBookId(""); setBookSearch(""); setPage(""); }}>
+                    <Feather name="x" size={16} color={colors.mutedFg} />
                   </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Book */}
-              {sourceType === "book" && (
-                bookId ? (
-                  // Book selected: chip + page field + clear
-                  <View style={[styles.selectedBookRow, { borderColor: colors.border }]}>
-                    <View style={[styles.selectedBookChip, { backgroundColor: colors.muted }]}>
-                      <Feather name="book" size={13} color={colors.mutedFg} style={{ marginRight: 5 }} />
-                      <Text style={[styles.selectedBookText, { color: colors.fg }]} numberOfLines={1}>
-                        {bookSearch}
+                </View>
+              ) : (
+                // Search
+                <View>
+                  <TextInput
+                    style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
+                    value={bookSearch}
+                    onChangeText={(v) => { setBookSearch(v); setBookId(""); }}
+                    placeholder={t("add.searchBooks")}
+                    placeholderTextColor={colors.mutedFg}
+                  />
+                  {bookSearch.length > 0 && filteredBooks.length > 0 && !saving && (
+                    <View style={[styles.dropdown, { backgroundColor: colors.muted }]}>
+                      {filteredBooks.slice(0, 5).map((b, i) => (
+                        <TouchableOpacity
+                          key={b.id}
+                          style={[styles.dropdownItem, { borderBottomColor: i < Math.min(filteredBooks.length, 5) - 1 ? colors.border : "transparent" }]}
+                          onPress={() => { setBookId(b.id); setBookSearch(b.title); }}
+                        >
+                          <Text style={[styles.dropdownText, { color: colors.fg }]}>{b.title}</Text>
+                          {b.author && <Text style={[styles.dropdownSub, { color: colors.mutedFg }]}>{b.author}</Text>}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                  {bookSearch.length > 0 && !bookId && !saving && (
+                    <View style={styles.newBookHint}>
+                      <Feather name="book" size={12} color={colors.mutedFg} />
+                      <Text style={[styles.newBookHintText, { color: colors.mutedFg }]}>
+                        {t("add.newBook")}: {bookSearch}
                       </Text>
                     </View>
-                    <TextInput
-                      style={[styles.pageInputSmall, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-                      value={page}
-                      onChangeText={(v) => setPage(v.replace(/\D/g, ""))}
-                      placeholder="p."
-                      placeholderTextColor={colors.mutedFg}
-                      keyboardType="numeric"
-                    />
-                    <TouchableOpacity
-                      style={styles.clearBookBtn}
-                      onPress={() => { setBookId(""); setBookSearch(""); setPage(""); }}
-                    >
-                      <Feather name="x" size={16} color={colors.mutedFg} />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  // Book search + autocomplete
-                  <View>
-                    <TextInput
-                      style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-                      value={bookSearch}
-                      onChangeText={(v) => { setBookSearch(v); setBookId(""); }}
-                      placeholder={t("add.searchBooks")}
-                      placeholderTextColor={colors.mutedFg}
-                    />
-                    {bookSearch.length > 0 && filteredBooks.length > 0 && (
-                      <View style={[styles.dropdown, { borderColor: colors.border, backgroundColor: colors.cardBg }]}>
-                        {filteredBooks.slice(0, 5).map((b, i) => (
-                          <TouchableOpacity
-                            key={b.id}
-                            style={[styles.dropdownItem, { borderBottomColor: i < filteredBooks.slice(0, 5).length - 1 ? colors.border : "transparent" }]}
-                            onPress={() => { setBookId(b.id); setBookSearch(b.title); }}
-                          >
-                            <Text style={[styles.dropdownText, { color: colors.fg }]}>{b.title}</Text>
-                            {b.author && (
-                              <Text style={[styles.dropdownSub, { color: colors.mutedFg }]}>{b.author}</Text>
-                            )}
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-                    {bookSearch.length > 0 && !bookId && (
-                      <View style={styles.newBookHint}>
-                        <Feather name="book" size={12} color={colors.mutedFg} />
-                        <Text style={[styles.newBookHintText, { color: colors.mutedFg }]}>
-                          {t("add.newBook")}: {bookSearch}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )
-              )}
-
-              {/* Video */}
-              {sourceType === "video" && (
-                <>
-                  <TextInput
-                    style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-                    value={videoTitle}
-                    onChangeText={setVideoTitle}
-                    placeholder={t("add.videoTitle")}
-                    placeholderTextColor={colors.mutedFg}
-                  />
-                  <TextInput
-                    style={[styles.input, { borderColor: colors.border, color: colors.fg, backgroundColor: colors.cardBg }]}
-                    value={videoUrl}
-                    onChangeText={setVideoUrl}
-                    placeholder={t("add.videoLink")}
-                    placeholderTextColor={colors.mutedFg}
-                    keyboardType="url"
-                    autoCapitalize="none"
-                  />
-                </>
+                  )}
+                </View>
               )}
             </View>
           )}
@@ -720,40 +633,26 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   collapseLabel: { fontSize: 15, flex: 1, marginRight: 8 },
-  collapseBody: { paddingBottom: 14 },
-  // Source type pills
-  pills: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 },
-  pill: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 20 },
-  pillText: { fontSize: 14 },
-  // Book selected state
-  selectedBookRow: {
+  // Book selected card
+  selectedCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 10,
-    padding: 10,
+    padding: 12,
     marginBottom: 4,
   },
-  selectedBookChip: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-  },
-  selectedBookText: { fontSize: 14, fontWeight: "500", flex: 1 },
-  pageInputSmall: {
+  selectedCardTitle: { fontSize: 14, fontWeight: "500", flex: 1, lineHeight: 20 },
+  pageInput: {
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 6,
     fontSize: 14,
-    width: 52,
+    width: 56,
     textAlign: "center",
   },
-  clearBookBtn: { padding: 4 },
   // Book search
   input: {
     borderWidth: 1,
@@ -763,12 +662,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dropdown: {
-    borderWidth: 1,
-    borderRadius: 10,
+    marginLeft: 8,
+    borderRadius: 8,
     overflow: "hidden",
     marginBottom: 10,
   },
-  dropdownItem: { padding: 12, borderBottomWidth: 1 },
+  dropdownItem: { paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   dropdownText: { fontSize: 14 },
   dropdownSub: { fontSize: 12, marginTop: 2 },
   newBookHint: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6, marginBottom: 4, paddingHorizontal: 2 },
