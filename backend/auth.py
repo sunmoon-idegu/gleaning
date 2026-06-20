@@ -7,6 +7,7 @@ import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -103,10 +104,14 @@ def _resolve_user(token: str, db: Session, allow_deleted: bool = False) -> User:
     user = db.query(User).filter(User.clerk_id == clerk_id).first()
     if user is None:
         email = _fetch_clerk_email(clerk_id)
-        user = User(clerk_id=clerk_id, email=email)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        try:
+            user = User(clerk_id=clerk_id, email=email)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except IntegrityError:
+            db.rollback()
+            user = db.query(User).filter(User.clerk_id == clerk_id).first()
 
     if not allow_deleted and user.deleted_at is not None:
         raise HTTPException(
