@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LanguageSelect } from "@/components/language-select";
 
-type SourceType = "book" | "video" | null;
+type SourceType = "book" | null;
 
 export default function EditQuotePage() {
   const { quoteId } = useParams<{ quoteId: string }>();
@@ -69,8 +69,6 @@ export default function EditQuotePage() {
     setSubmitting(true);
     const token = await waitForToken(getToken);
 
-    let sourceId: string | null = existingSourceId;
-
     await apiFetch(`/quotes/${quoteId}`, token, {
       method: "PATCH",
       body: JSON.stringify({
@@ -100,10 +98,6 @@ export default function EditQuotePage() {
     setNewBookLanguage("");
   }
 
-  const sourceTypes: { value: NonNullable<SourceType>; label: string }[] = [
-    { value: "book", label: "Book" },
-  ];
-
   if (loading) return <div className="py-12 text-sm text-neutral-400 animate-pulse">Loading…</div>;
 
   return (
@@ -129,20 +123,17 @@ export default function EditQuotePage() {
         <div>
           <label className="text-xs text-neutral-400 uppercase tracking-wide mb-2 block">Source</label>
           <div className="flex gap-1 flex-wrap">
-            {sourceTypes.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setSourceType(sourceType === value ? null : value)}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  sourceType === value
-                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
-                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => setSourceType(sourceType === "book" ? null : "book")}
+              className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                sourceType === "book"
+                  ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                  : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+              }`}
+            >
+              Book
+            </button>
           </div>
         </div>
 
