@@ -2,24 +2,35 @@
   "nav": {
     "feed": "Quotes",
     "shelf": "Shelf",
-    "search": "Search",
     "help": "Help",
-    "feedback": "Send feedback"
+    "feedback": "Send feedback",
+    "settings": "Settings"
+  },
+  "settings": {
+    "heading": "Settings",
+    "appearance": "Appearance",
+    "colorTheme": "Color theme",
+    "themeLight": "Light",
+    "themeSystem": "System",
+    "themeDark": "Dark",
+    "language": "Language",
+    "support": "Support"
   },
   "add": {
     "heading": "Add quote",
     "placeholder": "The quote…",
-    "save": "Save",
     "saving": "Saving…",
-    "addSource": "Add source",
+    "source": "Source",
     "sourceBook": "Book",
-    "sourceVideo": "Video",
-    "searchBooks": "Search books…",
-    "videoTitle": "Title (optional)",
-    "videoLink": "Link (optional)",
-    "page": "Page (optional)",
-    "savedTitle": "Saved",
-    "savedMessage": "Quote saved."
+    "page": "Page",
+    "bookPlaceholder": "Book name",
+    "addNewBook": "Add new book",
+    "bookTitle": "Book title",
+    "addBook": "Add book",
+    "addingBook": "Adding…",
+    "saveQuote": "Save quote",
+    "cancel": "Cancel",
+    "cmdSave": "⌘↵ to save"
   },
   "feedback": {
     "heading": "Send feedback",
@@ -43,27 +54,57 @@
   },
   "shelf": {
     "heading": "Shelf",
-    "addBook": "Add Book",
+    "addBook": "Add book",
     "titlePlaceholder": "Title",
     "authorPlaceholder": "Author (optional)",
     "languageLabel": "Language (optional)",
     "cancel": "Cancel",
     "add": "Add",
-    "quoteCount_one": "{{count}} quote",
-    "quoteCount_other": "{{count}} quotes"
+    "saving": "Saving…",
+    "added": "Added!",
+    "empty": "No books yet.",
+    "error": "Failed to load books. Please refresh.",
+    "langOther": "Other"
   },
-  "feed": {
-    "heading": "Quotes",
+  "quotes": {
     "empty": "No quotes yet."
   },
   "search": {
     "heading": "Search",
-    "placeholder": "Search quotes and books…",
+    "placeholder": "Search quotes, books, authors…",
     "noResults": "No results for \"{{query}}\""
   },
-  "lang": {
-    "en": "English",
-    "zh": "中文",
-    "ja": "日本語"
+  "help": {
+    "subtitle": "How Gleaning works and answers to common questions.",
+    "shortcuts": {
+      "heading": "Keyboard shortcuts",
+      "quickAdd": "Quick add",
+      "quickAddDetail": "Open the add-quote modal from anywhere",
+      "search": "Search",
+      "searchDetail": "Search across all quotes and books",
+      "displayMode": "Full display mode",
+      "displayModeDetail": "Feed only — hides nav, counter, and date",
+      "nextQuote": "Next quote",
+      "nextQuoteDetail": "Feed only"
+    },
+    "faq": {
+      "heading": "FAQ",
+      "q1": "What is full display mode?",
+      "a1": "Full display mode hides the navigation bar, quote counter, and date so the quote fills the screen. Useful for reading aloud, presenting, or focusing on a single quote.",
+      "q2": "How do I enter and exit full display mode?",
+      "a2": "On desktop, press F while on the Feed page. On mobile, double-tap the quote card. Press F again or double-tap again to exit.",
+      "q3": "What does ⌘E do?",
+      "a3": "⌘E (Ctrl+E on Windows/Linux) opens the add-quote modal from anywhere in the app — no need to navigate to a specific page first.",
+      "q4": "Can I add a quote without a book?",
+      "a4": "Yes. The only required field is the quote text. If you leave the book field blank the quote is saved without a source.",
+      "q5": "How do I organise my quotes?",
+      "a5": "The Shelf groups your books by language. Click any book to see all its quotes. You can also add a quote directly from a book's page with that book pre-selected.",
+      "q6": "How do I edit or delete a quote?",
+      "a6": "Click any quote to open its detail page, where you'll find Edit and Delete buttons."
+    },
+    "contact": {
+      "heading": "Contact",
+      "body": "Have a feature request or need assistance? We'd love to hear from you."
+    }
   }
 }

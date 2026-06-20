@@ -3,32 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
+import { useTranslation } from "react-i18next";
 import { apiFetch, waitForToken, LANGUAGES, type Book, type Quote } from "@/lib/api";
-import { Plus, X, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LanguageSelect } from "@/components/language-select";
 
-type SourceType = "book" | "video" | "live" | "unknown";
+type SourceType = "book" | "video" | null;
 
 export default function EditQuotePage() {
   const { quoteId } = useParams<{ quoteId: string }>();
   const { getToken, isLoaded } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
-  const [sourceType, setSourceType] = useState<SourceType>("unknown");
-  const [author, setAuthor] = useState("");
+  const [sourceType, setSourceType] = useState<SourceType>(null);
   const [page, setPage] = useState("");
-  const [videoTitle, setVideoTitle] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [liveSpeaker, setLiveSpeaker] = useState("");
-  const [liveContext, setLiveContext] = useState("");
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [bookId, setBookId] = useState("");
   const [bookSearch, setBookSearch] = useState("");
@@ -36,7 +31,6 @@ export default function EditQuotePage() {
   const [newBookTitle, setNewBookTitle] = useState("");
   const [newBookAuthor, setNewBookAuthor] = useState("");
   const [newBookLanguage, setNewBookLanguage] = useState("");
-  const [existingSourceId, setExistingSourceId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -50,27 +44,14 @@ export default function EditQuotePage() {
       ]);
       setBooks(booksData);
 
-      // Pre-fill fields
       setText(quote.text);
-      setAuthor(quote.author ?? "");
       setPage(quote.page?.toString() ?? "");
-      setTags(quote.tags.map((t) => t.name));
-      setExistingSourceId(quote.source_id);
 
-      const s = quote.source;
-      if (s) {
-        setSourceType(s.type as SourceType);
-        if (s.type === "book" && s.book_id) {
-          setBookId(s.book_id);
-          const book = booksData.find((b) => b.id === s.book_id);
-          if (book) setBookSearch(book.title);
-        } else if (s.type === "video") {
-          setVideoTitle(s.title ?? "");
-          setVideoUrl(s.url ?? "");
-        } else if (s.type === "live") {
-          setLiveSpeaker(s.author ?? "");
-          setLiveContext(s.context ?? "");
-        }
+      if (quote.source_type === "book" && quote.book_id) {
+        setSourceType("book");
+        setBookId(quote.book_id);
+        const book = booksData.find((b) => b.id === quote.book_id);
+        if (book) setBookSearch(book.title);
       }
 
       setLoading(false);
@@ -82,73 +63,21 @@ export default function EditQuotePage() {
     b.title.toLowerCase().includes(bookSearch.toLowerCase())
   );
 
-  function addTag(value: string) {
-    const trimmed = value.trim().toLowerCase();
-    if (trimmed && !tags.includes(trimmed)) setTags((t) => [...t, trimmed]);
-    setTagInput("");
-  }
-
-  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addTag(tagInput);
-    } else if (e.key === "Backspace" && !tagInput) {
-      setTags((t) => t.slice(0, -1));
-    }
-  }
-
   async function handleSubmit(e?: React.SyntheticEvent) {
     e?.preventDefault();
     if (!text.trim()) return;
     setSubmitting(true);
     const token = await waitForToken(getToken);
-    
 
     let sourceId: string | null = existingSourceId;
-
-    if (sourceType === "book" && bookId) {
-      const source = await apiFetch<{ id: string }>("/sources", token, {
-        method: "POST",
-        body: JSON.stringify({ type: "book", book_id: bookId }),
-      });
-      sourceId = source.id;
-    } else if (sourceType === "video" && videoTitle) {
-      const source = await apiFetch<{ id: string }>("/sources", token, {
-        method: "POST",
-        body: JSON.stringify({ type: "video", title: videoTitle, url: videoUrl || null }),
-      });
-      sourceId = source.id;
-    } else if (sourceType === "live") {
-      const source = await apiFetch<{ id: string }>("/sources", token, {
-        method: "POST",
-        body: JSON.stringify({ type: "live", author: liveSpeaker || null, context: liveContext || null }),
-      });
-      sourceId = source.id;
-    } else if (sourceType === "unknown") {
-      const source = await apiFetch<{ id: string }>("/sources", token, {
-        method: "POST",
-        body: JSON.stringify({ type: "unknown" }),
-      });
-      sourceId = source.id;
-    }
-
-    const tagIds: string[] = [];
-    for (const name of tags) {
-      const tag = await apiFetch<{ id: string }>("/tags", token, {
-        method: "POST",
-        body: JSON.stringify({ name }),
-      });
-      tagIds.push(tag.id);
-    }
 
     await apiFetch(`/quotes/${quoteId}`, token, {
       method: "PATCH",
       body: JSON.stringify({
         text: text.trim(),
-        author: author.trim() || null,
+        source_type: sourceType === "book" && bookId ? "book" : null,
+        book_id: sourceType === "book" && bookId ? bookId : null,
         page: page ? parseInt(page) : null,
-        source_id: sourceId,
-        tag_ids: tagIds,
       }),
     });
 
@@ -158,7 +87,6 @@ export default function EditQuotePage() {
   async function handleCreateBook() {
     if (!newBookTitle.trim()) return;
     const token = await waitForToken(getToken);
-    
     const book = await apiFetch<Book>("/books", token, {
       method: "POST",
       body: JSON.stringify({ title: newBookTitle.trim(), author: newBookAuthor.trim() || null, language: newBookLanguage || null }),
@@ -172,11 +100,8 @@ export default function EditQuotePage() {
     setNewBookLanguage("");
   }
 
-  const sourceTypes: { value: SourceType; label: string }[] = [
+  const sourceTypes: { value: NonNullable<SourceType>; label: string }[] = [
     { value: "book", label: "Book" },
-    { value: "video", label: "Video" },
-    { value: "live", label: "Live" },
-    { value: "unknown", label: "Unknown" },
   ];
 
   if (loading) return <div className="py-12 text-sm text-neutral-400 animate-pulse">Loading…</div>;
@@ -208,7 +133,7 @@ export default function EditQuotePage() {
               <button
                 key={value}
                 type="button"
-                onClick={() => setSourceType(value)}
+                onClick={() => setSourceType(sourceType === value ? null : value)}
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   sourceType === value
                     ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
@@ -257,7 +182,7 @@ export default function EditQuotePage() {
               <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 space-y-2">
                 <Input value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} placeholder="Book title" autoFocus />
                 <Input value={newBookAuthor} onChange={(e) => setNewBookAuthor(e.target.value)} placeholder="Author (optional)" />
-                <LanguageSelect value={newBookLanguage} onValueChange={setNewBookLanguage} />
+                <LanguageSelect value={newBookLanguage} onValueChange={setNewBookLanguage} placeholder={t("shelf.languageLabel")} />
                 <div className="flex gap-2 pt-1">
                   <button type="button" onClick={handleCreateBook} className="text-xs bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-3 py-1 rounded">Add book</button>
                   <button type="button" onClick={() => setShowNewBook(false)} className="text-xs text-neutral-400">Cancel</button>
@@ -267,36 +192,6 @@ export default function EditQuotePage() {
             <Input value={page} onChange={(e) => setPage(e.target.value)} placeholder="Page (optional)" type="number" />
           </div>
         )}
-
-        {sourceType === "video" && (
-          <div className="space-y-2">
-            <Input value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="Video title" />
-            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="URL (optional)" type="url" />
-          </div>
-        )}
-
-        {sourceType === "live" && (
-          <div className="space-y-2">
-            <Input value={liveSpeaker} onChange={(e) => setLiveSpeaker(e.target.value)} placeholder="Speaker (optional)" />
-            <Input value={liveContext} onChange={(e) => setLiveContext(e.target.value)} placeholder="Context (optional)" />
-          </div>
-        )}
-
-        {sourceType === "unknown" && (
-          <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)" />
-        )}
-
-        <div>
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {tags.map((t) => (
-              <span key={t} className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                {t}
-                <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))}><X size={10} /></button>
-              </span>
-            ))}
-          </div>
-          <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} onBlur={() => addTag(tagInput)} placeholder="Tags (comma or Enter to add)" />
-        </div>
 
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-neutral-400">⌘↵ to submit</p>

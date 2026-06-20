@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -11,6 +12,7 @@ interface SearchModalProps {
 }
 
 export function SearchModal({ open, onClose }: SearchModalProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -54,8 +56,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search quotes, books, authors, tags…"
-            className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 text-base px-0"
+            placeholder={t("search.placeholder")}
+            className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 text-base pl-3 pr-0"
           />
           <button
             type="button"

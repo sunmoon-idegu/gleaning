@@ -2,24 +2,35 @@
   "nav": {
     "feed": "語録",
     "shelf": "本棚",
-    "search": "検索",
     "help": "ヘルプ",
-    "feedback": "フィードバックを送る"
+    "feedback": "フィードバックを送る",
+    "settings": "設定"
+  },
+  "settings": {
+    "heading": "設定",
+    "appearance": "外観",
+    "colorTheme": "カラーテーマ",
+    "themeLight": "ライト",
+    "themeSystem": "システム",
+    "themeDark": "ダーク",
+    "language": "言語",
+    "support": "サポート"
   },
   "add": {
     "heading": "引用を追加",
     "placeholder": "引用文…",
-    "save": "保存",
     "saving": "保存中…",
-    "addSource": "出典を追加",
+    "source": "出典",
     "sourceBook": "本",
-    "sourceVideo": "動画",
-    "searchBooks": "本を検索…",
-    "videoTitle": "タイトル（任意）",
-    "videoLink": "リンク（任意）",
-    "page": "ページ（任意）",
-    "savedTitle": "保存しました",
-    "savedMessage": "引用を保存しました。"
+    "page": "ページ",
+    "bookPlaceholder": "本（任意）",
+    "addNewBook": "新しい本を追加",
+    "bookTitle": "本のタイトル",
+    "addBook": "本を追加",
+    "addingBook": "追加中…",
+    "saveQuote": "引用を保存",
+    "cancel": "キャンセル",
+    "cmdSave": "⌘↵ で保存"
   },
   "feedback": {
     "heading": "フィードバックを送る",
@@ -49,21 +60,51 @@
     "languageLabel": "言語（任意）",
     "cancel": "キャンセル",
     "add": "追加",
-    "quoteCount_one": "{{count}} 件",
-    "quoteCount_other": "{{count}} 件"
+    "saving": "保存中…",
+    "added": "追加しました！",
+    "empty": "まだ本がありません。",
+    "error": "本の読み込みに失敗しました。更新してください。",
+    "langOther": "その他"
   },
-  "feed": {
-    "heading": "語録",
+  "quotes": {
     "empty": "まだ引用がありません。"
   },
   "search": {
     "heading": "検索",
-    "placeholder": "引用や本を検索…",
+    "placeholder": "引用、本、著者を検索…",
     "noResults": "「{{query}}」の結果はありません"
   },
-  "lang": {
-    "en": "English",
-    "zh": "中文",
-    "ja": "日本語"
+  "help": {
+    "subtitle": "Gleaning の使い方とよくある質問への回答です。",
+    "shortcuts": {
+      "heading": "キーボードショートカット",
+      "quickAdd": "クイック追加",
+      "quickAddDetail": "どのページからでも引用追加モーダルを開く",
+      "search": "検索",
+      "searchDetail": "すべての引用と本を検索",
+      "displayMode": "全画面表示モード",
+      "displayModeDetail": "語録ページのみ — ナビ、カウンター、日付を非表示",
+      "nextQuote": "次の引用",
+      "nextQuoteDetail": "語録ページのみ"
+    },
+    "faq": {
+      "heading": "よくある質問",
+      "q1": "全画面表示モードとは何ですか？",
+      "a1": "全画面表示モードはナビゲーションバー、引用カウンター、日付を非表示にし、引用文が画面全体に広がります。音読や発表、または一つの引用に集中したいときに便利です。",
+      "q2": "全画面表示モードの入り方と終わり方は？",
+      "a2": "デスクトップでは、語録ページで F キーを押します。モバイルでは、引用カードをダブルタップします。もう一度 F を押すか、ダブルタップすると終了します。",
+      "q3": "⌘E は何をしますか？",
+      "a3": "⌘E（Windows/Linux では Ctrl+E）はアプリのどこからでも引用追加モーダルを開きます。特定のページに移動する必要はありません。",
+      "q4": "本なしで引用を追加できますか？",
+      "a4": "はい。必須フィールドは引用テキストのみです。本欄を空白にすると、出典なしで引用が保存されます。",
+      "q5": "引用を整理するには？",
+      "a5": "本棚では本が言語別にグループ化されます。本をクリックするとすべての引用が表示されます。本のページから直接引用を追加することもできます。",
+      "q6": "引用を編集または削除するには？",
+      "a6": "引用をクリックして詳細ページを開くと、編集と削除ボタンがあります。"
+    },
+    "contact": {
+      "heading": "お問い合わせ",
+      "body": "機能リクエストやご支援が必要な場合は、ぜひご連絡ください。"
+    }
   }
 }

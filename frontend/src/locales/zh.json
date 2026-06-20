@@ -2,24 +2,35 @@
   "nav": {
     "feed": "語錄",
     "shelf": "書架",
-    "search": "搜尋",
     "help": "說明",
-    "feedback": "傳送意見回饋"
+    "feedback": "傳送意見回饋",
+    "settings": "設定"
+  },
+  "settings": {
+    "heading": "設定",
+    "appearance": "外觀",
+    "colorTheme": "顏色主題",
+    "themeLight": "淺色",
+    "themeSystem": "系統",
+    "themeDark": "深色",
+    "language": "語言",
+    "support": "支援"
   },
   "add": {
     "heading": "新增摘錄",
     "placeholder": "摘錄內容…",
-    "save": "儲存",
     "saving": "儲存中…",
-    "addSource": "新增來源",
+    "source": "來源",
     "sourceBook": "書籍",
-    "sourceVideo": "影片",
-    "searchBooks": "搜尋書籍…",
-    "videoTitle": "標題（選填）",
-    "videoLink": "連結（選填）",
-    "page": "頁碼（選填）",
-    "savedTitle": "已儲存",
-    "savedMessage": "摘錄已儲存。"
+    "page": "頁碼",
+    "bookPlaceholder": "書名",
+    "addNewBook": "新增書籍",
+    "bookTitle": "書名",
+    "addBook": "新增書籍",
+    "addingBook": "新增中…",
+    "saveQuote": "儲存摘錄",
+    "cancel": "取消",
+    "cmdSave": "⌘↵ 儲存"
   },
   "feedback": {
     "heading": "傳送意見回饋",
@@ -49,21 +60,51 @@
     "languageLabel": "語言（選填）",
     "cancel": "取消",
     "add": "新增",
-    "quoteCount_one": "{{count}} 條摘錄",
-    "quoteCount_other": "{{count}} 條摘錄"
+    "saving": "儲存中…",
+    "added": "已新增！",
+    "empty": "還沒有書籍。",
+    "error": "載入書籍失敗，請重新整理。",
+    "langOther": "其他"
   },
-  "feed": {
-    "heading": "語錄",
+  "quotes": {
     "empty": "還沒有摘錄。"
   },
   "search": {
     "heading": "搜尋",
-    "placeholder": "搜尋摘錄和書籍…",
+    "placeholder": "搜尋摘錄、書籍、作者…",
     "noResults": "「{{query}}」暫無結果"
   },
-  "lang": {
-    "en": "English",
-    "zh": "中文",
-    "ja": "日本語"
+  "help": {
+    "subtitle": "瞭解 Gleaning 的功能與常見問題解答。",
+    "shortcuts": {
+      "heading": "鍵盤快捷鍵",
+      "quickAdd": "快速新增",
+      "quickAddDetail": "從任何頁面開啟新增摘錄視窗",
+      "search": "搜尋",
+      "searchDetail": "搜尋所有摘錄與書籍",
+      "displayMode": "全版顯示模式",
+      "displayModeDetail": "僅限語錄頁面 — 隱藏導覽列、計數器與日期",
+      "nextQuote": "下一條摘錄",
+      "nextQuoteDetail": "僅限語錄頁面"
+    },
+    "faq": {
+      "heading": "常見問題",
+      "q1": "什麼是全版顯示模式？",
+      "a1": "全版顯示模式會隱藏導覽列、引用計數器和日期，讓引用文字填滿整個螢幕。適合朗讀、簡報或專注於單一引用。",
+      "q2": "如何進入和退出全版顯示模式？",
+      "a2": "在桌面版，於語錄頁面按下 F 鍵。在行動裝置上，雙擊引用卡片。再次按 F 或雙擊即可退出。",
+      "q3": "⌘E 有什麼功能？",
+      "a3": "⌘E（Windows/Linux 為 Ctrl+E）可從應用程式的任何頁面開啟新增摘錄視窗，無需先導覽到特定頁面。",
+      "q4": "可以不填書籍直接新增摘錄嗎？",
+      "a4": "可以。唯一必填的欄位是摘錄文字。若留空書籍欄位，摘錄將直接儲存而不附帶來源。",
+      "q5": "如何整理我的摘錄？",
+      "a5": "書架會依語言分組顯示您的書籍。點擊任一本書即可查看其所有摘錄，也可以直接在書籍頁面新增摘錄。",
+      "q6": "如何編輯或刪除摘錄？",
+      "a6": "點擊任一摘錄開啟詳細頁面，頁面中有編輯和刪除按鈕。"
+    },
+    "contact": {
+      "heading": "聯絡我們",
+      "body": "有功能建議或需要協助嗎？歡迎與我們聯繫。"
+    }
   }
 }

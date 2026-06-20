@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useTranslation } from "react-i18next";
 import { apiFetch, waitForToken, type Quote } from "@/lib/api";
 import { QuoteCard } from "@/components/quote-card";
 import { ChevronRight } from "lucide-react";
@@ -11,6 +12,7 @@ function setDisplayMode(active: boolean) {
 }
 
 export default function FeedPage() {
+  const { t } = useTranslation();
   const { getToken, isLoaded } = useAuth();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [index, setIndex] = useState(0);
@@ -29,7 +31,7 @@ export default function FeedPage() {
     }
   }
 
-  useEffect(() => { document.title = "Feed · Gleaning"; }, []);
+  useEffect(() => { document.title = "Quotes · Gleaning"; }, []);
 
   // Sync display mode state to nav/button via custom event
   useEffect(() => {
@@ -106,7 +108,7 @@ export default function FeedPage() {
   if (quotes.length === 0) {
     return (
       <div className="text-center py-32 text-neutral-400">
-        <p className="text-sm">No quotes yet. Press ⌘E to add one.</p>
+        <p className="text-sm">{t("quotes.empty")}</p>
       </div>
     );
   }
@@ -121,12 +123,6 @@ export default function FeedPage() {
           <QuoteCard
             quote={quote}
             hideDate={displayMode}
-            onDeleted={(id) => {
-              const next = quotes.filter((x) => x.id !== id);
-              setQuotes(next);
-              setIndex((i) => Math.min(i, Math.max(0, next.length - 1)));
-            }}
-            onUpdated={(updated) => setQuotes((qs) => qs.map((x) => x.id === updated.id ? updated : x))}
           />
         </div>
 

@@ -54,31 +54,13 @@ export const LANGUAGES = [
   { code: "ja", label: "日本語" },
 ] as const;
 
-export interface Source {
-  id: string;
-  type: "book" | "video" | "live" | "unknown";
-  title: string | null;
-  author: string | null;
-  url: string | null;
-  context: string | null;
-  book_id: string | null;
-  book: Book | null;
-  created_at: string;
-}
-
-export interface Tag {
-  id: string;
-  name: string;
-}
-
 export interface Quote {
   id: string;
   text: string;
-  author: string | null;
+  source_type: string | null;  // 'book' | null — extensible
+  book_id: string | null;
+  book: Book | null;
   page: number | null;
-  source_id: string | null;
-  source: Source | null;
-  tags: Tag[];
   created_at: string;
 }
 

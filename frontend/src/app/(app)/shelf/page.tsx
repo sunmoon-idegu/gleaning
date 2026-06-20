@@ -2,15 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useTranslation } from "react-i18next";
 import { apiFetch, waitForToken, LANGUAGES, type Book } from "@/lib/api";
 import Link from "next/link";
-import { BookOpen, Plus, MoreHorizontal } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,9 +17,9 @@ import {
 } from "@/components/ui/dialog";
 import { LanguageSelect } from "@/components/language-select";
 
-function langLabel(code: string | null) {
-  if (!code) return "Other";
-  return LANGUAGES.find((l) => l.code === code)?.label ?? "Other";
+function langLabel(code: string | null, other: string) {
+  if (!code) return other;
+  return LANGUAGES.find((l) => l.code === code)?.label ?? other;
 }
 
 function groupByLanguage(books: Book[]): [string, Book[]][] {
@@ -43,6 +38,7 @@ function groupByLanguage(books: Book[]): [string, Book[]][] {
 }
 
 export default function ShelfPage() {
+  const { t } = useTranslation();
   const { getToken, isLoaded } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,16 +53,6 @@ export default function ShelfPage() {
   const [saved, setSaved] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // Edit book dialog
-  const [editBook, setEditBook] = useState<Book | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editAuthor, setEditAuthor] = useState("");
-  const [editLanguage, setEditLanguage] = useState("");
-  const [editSaving, setEditSaving] = useState(false);
-
-  // Delete confirmation
-  const [deleteBookId, setDeleteBookId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -105,40 +91,10 @@ export default function ShelfPage() {
     setTimeout(() => { setSaved(false); setShowAdd(false); }, 1000);
   }
 
-  function openEdit(book: Book) {
-    setEditBook(book);
-    setEditTitle(book.title);
-    setEditAuthor(book.author ?? "");
-    setEditLanguage(book.language ?? "");
-  }
-
-  async function handleEditSave() {
-    if (!editBook || !editTitle.trim()) return;
-    setEditSaving(true);
-    const token = await waitForToken(getToken);
-    const updated = await apiFetch<Book>(`/books/${editBook.id}`, token, {
-      method: "PATCH",
-      body: JSON.stringify({ title: editTitle.trim(), author: editAuthor.trim() || null, language: editLanguage || null }),
-    });
-    setBooks((bs) => bs.map((b) => b.id === updated.id ? updated : b).sort((a, b) => a.title.localeCompare(b.title)));
-    setEditBook(null);
-    setEditSaving(false);
-  }
-
-  async function handleDelete() {
-    if (!deleteBookId) return;
-    setDeleting(true);
-    const token = await waitForToken(getToken);
-    await apiFetch(`/books/${deleteBookId}`, token, { method: "DELETE" });
-    setBooks((bs) => bs.filter((b) => b.id !== deleteBookId));
-    setDeleteBookId(null);
-    setDeleting(false);
-  }
-
   if (error) {
     return (
       <div className="text-center py-32 text-neutral-400">
-        <p className="text-sm">Failed to load books. Please refresh.</p>
+        <p className="text-sm">{t("shelf.error")}</p>
       </div>
     );
   }
@@ -159,9 +115,9 @@ export default function ShelfPage() {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-lg font-semibold">Shelf</h1>
+        <h1 className="text-lg font-semibold">{t("shelf.heading")}</h1>
         <Button onClick={() => setShowAdd(true)}>
-          <Plus size={14} /> Add book
+          <Plus size={14} /> {t("shelf.addBook")}
         </Button>
       </div>
 
@@ -169,19 +125,19 @@ export default function ShelfPage() {
       <Dialog open={showAdd} onOpenChange={(open) => { if (!open && !saving) { setShowAdd(false); setTitle(""); setAuthor(""); setLanguage(""); setSaved(false); } }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add book</DialogTitle>
+            <DialogTitle>{t("shelf.addBook")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddBook}>
             <div className="space-y-3 py-1">
-              <Input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
-              <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)" />
-              <LanguageSelect value={language} onValueChange={setLanguage} />
+              <Input ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("shelf.titlePlaceholder")} />
+              <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder={t("shelf.authorPlaceholder")} />
+              <LanguageSelect value={language} onValueChange={setLanguage} placeholder={t("shelf.languageLabel")} />
             </div>
             <DialogFooter className="items-center mt-4">
-              <Button variant="outline" type="button" onClick={() => setShowAdd(false)}>Cancel</Button>
+              <Button variant="outline" type="button" onClick={() => setShowAdd(false)}>{t("shelf.cancel")}</Button>
               <Button type="submit" disabled={!title.trim() || saving || saved}
                 className={saved ? "bg-green-600 hover:bg-green-600 text-white" : ""}>
-                {saved ? "Added!" : saving ? "Saving…" : "Add book"}
+                {saved ? t("shelf.added") : saving ? t("shelf.saving") : t("shelf.add")}
               </Button>
             </DialogFooter>
           </form>
@@ -191,14 +147,14 @@ export default function ShelfPage() {
       {/* Book grid grouped by language */}
       {books.length === 0 ? (
         <div className="text-center py-24 text-muted-foreground">
-          <p className="text-sm">No books yet.</p>
+          <p className="text-sm">{t("shelf.empty")}</p>
         </div>
       ) : (
         <div className="space-y-8">
           {groups.map(([code, groupBooks]) => (
             <div key={code}>
               <h2 className="text-base font-medium text-muted-foreground mb-3">
-                {langLabel(code)}
+                {langLabel(code, t("shelf.langOther"))}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {groupBooks.map((book) => (
@@ -215,20 +171,6 @@ export default function ShelfPage() {
                         <BookOpen size={11} />
                       </div>
                     </Link>
-                    {/* Book actions */}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground">
-                          <MoreHorizontal size={13} />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(book)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem variant="destructive" onClick={() => setDeleteBookId(book.id)}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -237,43 +179,6 @@ export default function ShelfPage() {
         </div>
       )}
 
-      {/* Edit book dialog */}
-      <Dialog open={!!editBook} onOpenChange={(open) => !open && setEditBook(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit book</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Title" />
-            <Input value={editAuthor} onChange={(e) => setEditAuthor(e.target.value)} placeholder="Author (optional)" />
-            <LanguageSelect value={editLanguage} onValueChange={setEditLanguage} />
-          </div>
-          <DialogFooter className="items-center">
-            <Button variant="outline" onClick={() => setEditBook(null)}>Cancel</Button>
-            <Button onClick={handleEditSave} disabled={!editTitle.trim() || editSaving}>
-              {editSaving ? "Saving…" : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete book dialog */}
-      <Dialog open={!!deleteBookId} onOpenChange={(open) => !open && setDeleteBookId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete book?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            The book will be removed. Quotes from this book will remain but lose their source.
-          </p>
-          <DialogFooter className="items-center">
-            <Button variant="outline" onClick={() => setDeleteBookId(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting…" : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

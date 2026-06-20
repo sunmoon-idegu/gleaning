@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Search, BookOpen, List, HelpCircle, MessageSquare } from "lucide-react";
+import { Search, BookOpen, List, Settings } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useTranslation } from "react-i18next";
-import { ThemeToggle } from "./theme-toggle";
-import { LangToggle } from "./lang-toggle";
 import { SearchModal } from "./search-modal";
 import { Button } from "@/components/ui/button";
 import { GleaningIcon } from "@/components/gleaning-icon";
@@ -86,23 +84,20 @@ export function Nav() {
             >
               <Search size={16} />
             </Button>
-            <LangToggle />
-            <ThemeToggle />
-            <div className="ml-2 flex items-center">
-              <UserButton>
-                <UserButton.MenuItems>
-                  <UserButton.Link
-                    label={t("nav.help")}
-                    href="/help"
-                    labelIcon={<HelpCircle size={16} />}
-                  />
-                  <UserButton.Link
-                    label={t("nav.feedback")}
-                    href="/feedback"
-                    labelIcon={<MessageSquare size={16} />}
-                  />
-                </UserButton.MenuItems>
-              </UserButton>
+            <Link
+              href="/settings"
+              className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                pathname === "/settings"
+                  ? "text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800"
+                  : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+              aria-label={t("nav.settings")}
+              title={t("nav.settings")}
+            >
+              <Settings size={16} />
+            </Link>
+            <div className="ml-1 flex items-center">
+              <UserButton />
             </div>
           </div>
         </div>

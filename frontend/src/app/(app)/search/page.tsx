@@ -3,10 +3,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
+import { useTranslation } from "react-i18next";
 import { apiFetch, waitForToken, type Quote } from "@/lib/api";
 import { QuoteCard } from "@/components/quote-card";
 
 function SearchResults() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const { getToken, isLoaded } = useAuth();
@@ -27,7 +29,7 @@ function SearchResults() {
 
   return (
     <div>
-      <h1 className="text-lg font-semibold mb-1">Search</h1>
+      <h1 className="text-lg font-semibold mb-1">{t("search.heading")}</h1>
       {q && <p className="text-sm text-neutral-400 mb-6">Results for &ldquo;{q}&rdquo;</p>}
 
       {loading && (
@@ -42,10 +44,10 @@ function SearchResults() {
       )}
 
       {!loading && q && quotes.length === 0 && (
-        <p className="text-sm text-neutral-400">No results found.</p>
+        <p className="text-sm text-neutral-400">{t("search.noResults", { query: q })}</p>
       )}
 
-      {!loading && quotes.map((q) => <QuoteCard key={q.id} quote={q} onDeleted={(id) => setQuotes((qs) => qs.filter((x) => x.id !== id))} />)}
+      {!loading && quotes.map((q) => <QuoteCard key={q.id} quote={q} />)}
     </div>
   );
 }

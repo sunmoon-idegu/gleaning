@@ -18,7 +18,7 @@ interface LanguageSelectProps {
 export function LanguageSelect({
   value,
   onValueChange,
-  placeholder = "Language (optional)",
+  placeholder = "",
   className,
 }: LanguageSelectProps) {
   const label = LANGUAGES.find((l) => l.code === value)?.label;
