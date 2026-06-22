@@ -12,7 +12,8 @@
       "bundleIdentifier": "io.gleaning.app",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Used to pick a photo of a page to extract a quote.",
-        "NSCameraUsageDescription": "Used to take a photo of a page to extract a quote."
+        "NSCameraUsageDescription": "Used to take a photo of a page to extract a quote.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "web": {
