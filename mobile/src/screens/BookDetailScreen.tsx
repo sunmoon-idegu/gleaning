@@ -1,10 +1,11 @@
 import { useAuth } from "@clerk/clerk-expo";
 import Feather from "@expo/vector-icons/Feather";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Modal,
   Pressable,
   ScrollView,
@@ -17,6 +18,7 @@ import {
 import { apiFetch, type BookWithQuotes, type Quote } from "../lib/api";
 import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import { ApiError } from "../lib/api";
+import ReflectionsSection from "../components/ReflectionsSection";
 
 const LANG_OPTIONS: { code: string; label: string }[] = [
   { code: "en", label: "English" },
@@ -53,6 +55,10 @@ export default function BookDetail({ bookId, onBack, onDelete }: BookDetailProps
   const [editLang, setEditLang] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const moreRef = useRef<View>(null);
+  const menuAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setLoading(true);
@@ -154,19 +160,26 @@ export default function BookDetail({ bookId, onBack, onDelete }: BookDetailProps
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      {/* Header row: back + edit */}
+      {/* Header row */}
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.back} onPress={onBack} hitSlop={12}>
-          <Text style={[styles.backText, { color: colors.mutedFg }]}>{t("shelf.backLabel")}</Text>
+        <TouchableOpacity style={styles.iconBtn} onPress={onBack} hitSlop={12}>
+          <Feather name="arrow-left" size={22} color={colors.fg} />
         </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.iconBtn} onPress={openEdit} hitSlop={12}>
-            <Feather name="edit-2" size={16} color={colors.mutedFg} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={handleDeleteBook} hitSlop={12} disabled={deleting}>
-            <Feather name="trash-2" size={16} color={colors.mutedFg} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          ref={moreRef}
+          onPress={() => {
+            moreRef.current?.measure((_fx: number, _fy: number, _w: number, h: number, _px: number, py: number) => {
+              setMenuPos({ top: py + h + 4, right: 12 });
+              menuAnim.setValue(0);
+              setShowMore(true);
+              Animated.timing(menuAnim, { toValue: 1, duration: 160, useNativeDriver: true }).start();
+            });
+          }}
+          style={styles.iconBtn}
+          hitSlop={12}
+        >
+          <Feather name="more-horizontal" size={20} color={colors.mutedFg} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -184,7 +197,45 @@ export default function BookDetail({ bookId, onBack, onDelete }: BookDetailProps
         ) : (
           book.quotes.map((q) => <QuoteItem key={q.id} quote={q} colors={colors} />)
         )}
+
+        <ReflectionsSection targetType="book" targetId={bookId} />
       </ScrollView>
+
+      {/* Popup menu */}
+      <Modal visible={showMore} transparent animationType="none" onRequestClose={() => setShowMore(false)}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowMore(false)}>
+          {menuPos && (
+            <Animated.View
+              style={[styles.menu, {
+                top: menuPos.top,
+                right: menuPos.right,
+                backgroundColor: colors.cardBg,
+                opacity: menuAnim,
+                transform: [{ translateY: menuAnim.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }],
+              }]}
+              onStartShouldSetResponder={() => true}
+            >
+              <TouchableOpacity
+                style={[styles.menuRow, { borderBottomColor: colors.border, backgroundColor: colors.cardBg }]}
+                onPress={() => { setShowMore(false); openEdit(); }}
+                activeOpacity={0.7}
+              >
+                <Feather name="edit-2" size={14} color={colors.fg} />
+                <Text style={[styles.menuRowText, { color: colors.fg }]}>{t("quoteDetail.edit")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.menuRow, { backgroundColor: colors.cardBg, borderBottomWidth: 0 }]}
+                onPress={() => { setShowMore(false); handleDeleteBook(); }}
+                activeOpacity={0.7}
+                disabled={deleting}
+              >
+                <Feather name="trash-2" size={14} color="#ef4444" />
+                <Text style={[styles.menuRowText, { color: "#ef4444" }]}>{t("quoteDetail.delete")}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </Pressable>
+      </Modal>
 
       {/* Edit modal */}
       <Modal
@@ -270,9 +321,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingRight: 20,
   },
-  back: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
-  backText: { fontSize: 15 },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 4, paddingRight: 12 },
   iconBtn: { padding: 8 },
   scroll: { paddingHorizontal: 20, paddingBottom: 48, paddingTop: 8 },
   heading: { fontSize: 22, fontWeight: "600", marginBottom: 4 },
@@ -301,4 +349,25 @@ const styles = StyleSheet.create({
   modalBtnCancel: { borderWidth: 1 },
   modalBtnDisabled: { opacity: 0.4 },
   modalBtnText: { fontSize: 15, fontWeight: "600" },
+  // Popup menu
+  menu: {
+    position: "absolute",
+    width: 140,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  menuRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  menuRowText: { fontSize: 15 },
 });

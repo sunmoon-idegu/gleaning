@@ -2,17 +2,19 @@
 
 ## Purpose
 
-A tool for people who read seriously and want to keep the sentences that matter — primarily from physical books. The core loop: encounter a passage → save it in seconds → find it again when it becomes relevant.
+A tool for anyone who encounters a sentence worth keeping. The core loop: encounter a passage → save it in seconds → let it surface again when you least expect it.
+
+Phase 1 focus is physical books. Video, talk, and ebook sources are planned but not yet built.
 
 ---
 
 ## Target User
 
-Reads 15–30 books a year across two languages (Chinese and English). The reading is a mix of literary fiction, history, philosophy, and essays — not self-help or how-to. Books are physical more often than not, especially Chinese titles which rarely have Kindle editions.
+Reads in one or more languages. Books are physical more often than not, especially titles in Chinese or Japanese which rarely have Kindle editions.
 
-This person underlines. They dog-ear pages. They have 40 marked-up books on their shelf. They think of reading as how they form opinions and understand the world, not as a hobby or a metric.
+This person underlines. They dog-ear pages. They have marked-up books on their shelf. They just want to keep the sentences that hit them — and have them come back.
 
-They are not building a second brain. They are not running a reading challenge. They just want to keep the sentences that hit them — and be able to find them again.
+They are not building a second brain. They are not running a reading challenge.
 
 ---
 
@@ -79,7 +81,7 @@ A topic comes up — in a conversation, while writing, while thinking through a 
 Someone else says something, and they want to respond with the exact passage. "There's this line from Pessoa —" They open Gleaning, find it, copy it. Without the app, they would paraphrase badly or say "I read something like this once."
 
 **Serendipitous rediscovery.**
-Idle moment — on the subway, before sleep. They open the Feed and scroll. A quote from eight months ago appears. It is relevant to something they are thinking about now in a way it was not when they saved it. This is the least functional and most valuable use. It requires the collection to be large enough and the presentation calm enough to reward browsing.
+Idle moment — on the subway, before sleep. They open the Feed and scroll. A quote from eight months ago appears. They remember the moment they saved it. This is the most valuable use — not retrieval, not search, just a quiet encounter with something they once found worth keeping. It requires the collection to be large enough and the presentation calm enough to reward browsing.
 
 **Before or after a reading session.**
 They finish a chapter with three things underlined. They save them while it is fresh, not during reading. Or they open Gleaning before reading to re-read something from the same author.
@@ -94,7 +96,7 @@ They are recommending a book, writing something, or returning to a thinker they 
 - **Capture speed is the product.** If saving takes more than 30 seconds on mobile, most passages will not be saved. Every second of friction is quotes lost.
 - **OCR is core, not a feature.** For physical books — especially Chinese books without Kindle editions — it is the only fast capture path.
 - **Search must work.** The collection is only as useful as its searchability. A quote saved but not findable is the same as a quote not saved.
-- **The Feed is for rediscovery, not consumption.** It should surface quotes from the full history of the collection, not just recent ones. Serendipity is a feature.
+- **The Feed is for serendipity, not retrieval.** It should surface quotes from the full history of the collection without expectation. The user is not looking for anything — the quote finds them.
 - **The Shelf is the library.** The book-centric view matters to this user. Their identity is partly organised around books they have read.
 - **Calm over clever.** This user is not looking for gamification, streaks, or social features. The aesthetic should feel like the inside of a bookshop, not a productivity dashboard.
 
@@ -130,19 +132,79 @@ A first-class entity. Multiple quotes can reference the same book.
 | language  | enum   | no       | `en`, `zh`, or `ja`         |
 | cover_url | string | no       | Reserved for future use     |
 
+### Reflection
+A personal note attached to a quote or a book. Not part of the quote itself — a separate thought the reader had about it, written later.
+
+| Field       | Type   | Required | Notes                          |
+|-------------|--------|----------|--------------------------------|
+| target_type | string | yes      | `'quote'` or `'book'`          |
+| target_id   | UUID   | yes      | ID of the quote or book        |
+| content     | text   | yes      |                                |
+| created_at  | date   | auto     |                                |
+
+Multiple reflections per quote or book are allowed. Stored in the `reflections` table with a composite index on `(user_id, target_type, target_id)`.
+
 ### Source (Phase 1)
 Phase 1 supports **book** as the only source type. The schema uses a `source_type` discriminator on quotes directly — no separate sources table — keeping the data model flat and the join count low.
 
-### Source (Phase 2 — planned)
-Future source types to be added without breaking the quotes table:
+### Source + Person (under discussion)
 
-| Type    | Fields                          | Example                            |
-|---------|---------------------------------|------------------------------------|
-| `book`  | book_id → books, page           | *Meditations*, p.42                |
-| `video` | video_id → videos, title, url, creator | YouTube talk, documentary   |
-| `post`  | post_id → posts, url, creator   | TikTok, Instagram, Twitter/X quote |
+**The problem with the current schema:**
+A quote like *"I believe in pink"* is attributed to Audrey Hepburn, but it is not known which book, interview, or talk she said it in. The current schema has no way to record the person without also knowing the source. `author` lives on the `Book` table, not on the quote itself, so a quote without a book cannot have an author.
 
-Each new type gets its own table (e.g. `videos`, `posts`) and a new nullable FK on quotes. `source_type` disambiguates which FK is set. Existing book quotes are unaffected.
+**Proposed schema:**
+
+```
+Person
+├── id
+├── name        e.g. "Audrey Hepburn", "Richard Feynman"
+└── photo_url   (optional)
+
+Source
+├── id
+├── person_id   → Person  (nullable)
+├── type        'book' | 'video' | 'talk' | 'article'
+├── title       e.g. "Surely You're Joking", "TED 2006"
+└── url         (nullable — for video and talk)
+
+Quote
+├── text
+├── person_id   → Person  (nullable — who said it)
+├── source_id   → Source  (nullable — where it was said)
+├── page        (for books)
+└── timestamp   e.g. "14:32"  (for video/talks)
+```
+
+**Why Person is separate from Source:**
+The same person appears across multiple sources (books, interviews, talks). Linking person directly to the quote — independently of the source — means you can record attribution even when the source is unknown, and later browse all quotes by a person across all their works.
+
+**The four real cases:**
+
+| Quote | Person | Source |
+|-------|--------|--------|
+| "I believe in pink" | Audrey Hepburn | unknown (null) |
+| Quote from Feynman's book | Feynman | *Surely You're Joking*, p.42 |
+| Quote from a TED talk | Speaker | TED talk URL |
+| Ancient proverb | unknown (null) | unknown (null) |
+
+**Capture flow (planned):**
+```
+Type quote → optionally add attribution → save
+```
+Attribution expands inline with three paths:
+- **Fast**: skip everything, just save the text
+- **Medium**: type a person name (autocompletes from past people), skip source
+- **Full**: person + source type (Book / Video / Talk) + source details
+
+The person field autocompletes from previously entered people so repeat attribution is fast.
+
+**Migration path:**
+1. Create `persons` table
+2. Create `sources` table (absorbs `books`, adds video/talk)
+3. Migrate existing books → sources with `type='book'`, author text → person record
+4. Add `person_id` and `source_id` to quotes, drop `book_id` and `source_type`
+
+The `Book` entity on the Shelf becomes a view of sources where `type='book'`, so the Shelf UI is largely unchanged.
 
 ---
 
@@ -181,7 +243,16 @@ Each new type gets its own table (e.g. `videos`, `posts`) and a new nullable FK 
 - Searches across: quote text, book title, book author
 - Results show quote excerpt + book
 
-### 5. Source Management
+### 5. Reflections
+- Each quote and each book has a Reflections section at the bottom of its detail view
+- A reflection is a personal note written after the fact — a thought, reaction, or connection the reader had
+- Multiple reflections per quote/book are allowed, shown in reverse-chronological order
+- Add: tap `+` → bottom sheet with text input → save
+- Edit/Delete: long-press a reflection row → action sheet
+- Optimistic UI: new reflection appears immediately with a spinner while the API call is in flight; removed on failure
+- Appears on both mobile (Quote Detail, Book Detail) and web (quote detail page, book detail page)
+
+### 6. Source Management
 - Sources are set inline during quote entry (book selection + page)
 
 ---
@@ -214,9 +285,10 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 ### Mobile screens
 | Screen | Description |
 |--------|-------------|
-| Feed | Quote list with two display modes (see below) |
-| Quote Detail | Full quote with Copy action; swipe left edge to go back |
-| Shelf | Books grouped by language; tap book → quotes by page |
+| Quotes | Quote list with two display modes (see below) |
+| Quote Detail | Full quote + Reflections section; header has Copy and ⋯ (edit/delete popup); swipe left edge to go back |
+| Book Detail | Book title, author, all quotes from the book, Reflections section; header has ⋯ (edit/delete popup) |
+| Shelf | Books grouped by language; tap book → Book Detail |
 | Add | Manual entry + camera/library OCR capture |
 | Search | Full-text search across quotes and book titles |
 | Settings | Theme, feed display mode, sort order, font size — all synced to account via API |
@@ -246,6 +318,10 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 | `POST /users/me/recover` | Cancels a pending deletion within the 30-day grace period |
 | `POST /users/purge-deleted` | Hard-deletes expired accounts (called by daily cron with secret header) |
 | `POST /feedback` | Saves a feedback entry (category + message) to the `feedback` table |
+| `GET /reflections?target_type=&target_id=` | Returns all reflections for a quote or book |
+| `POST /reflections` | Creates a reflection |
+| `PATCH /reflections/{id}` | Updates a reflection's content |
+| `DELETE /reflections/{id}` | Deletes a reflection |
 
 ---
 
@@ -259,7 +335,7 @@ Separate client, same backend API. Primary job: **capture** — the web app is f
 - Public profiles
 - Social / sharing features
 - Auto-detect book from photo (v2)
-- Video and social media sources (Phase 2)
+- Person + Source redesign (under discussion; see Core Concepts above)
 
 ---
 

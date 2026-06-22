@@ -9,13 +9,13 @@
     "heading": "語錄",
     "error": "載入失敗，請重試。",
     "retry": "重試",
-    "empty": "還沒有摘錄。"
+    "empty": "還沒有語錄。"
   },
   "add": {
-    "heading": "新增摘錄",
+    "heading": "新增語錄",
     "camera": "📷 拍照",
     "library": "🖼 相冊",
-    "placeholder": "摘錄內容…",
+    "placeholder": "語錄內容…",
     "save": "儲存",
     "addSource": "+ 新增來源",
     "fromSource": "來自：{{title}}",
@@ -24,7 +24,7 @@
     "createBook": "+ 建立「{{title}}」",
     "newBook": "新書籍",
     "page": "頁",
-    "markQuote": "標記摘錄",
+    "markQuote": "標記語錄",
     "dragHint": "拖動選取 · 移動框 · 拖角調整大小",
     "fullImage": "全圖",
     "extractSelection": "擷取選取",
@@ -33,12 +33,12 @@
     "selectPassage": "選擇段落",
     "whichPassage": "您想儲存哪一段？",
     "savedTitle": "已儲存",
-    "savedMessage": "摘錄已儲存至 Gleaning。",
+    "savedMessage": "語錄已儲存至 Gleaning。",
     "permissionRequired": "需要權限",
     "permissionCamera": "需要相機權限才能拍照。",
     "permissionLibrary": "需要相冊權限。",
     "errorTitle": "錯誤",
-    "couldNotSave": "無法儲存摘錄，請重試。",
+    "couldNotSave": "無法儲存語錄，請重試。",
     "couldNotExtract": "無法擷取文字，請重試。",
     "timedOut": "請求逾時，請重試。",
     "couldNotCreateBook": "無法建立書籍，請重試。"
@@ -53,13 +53,13 @@
     "languageLabel": "語言（選填）",
     "couldNotAdd": "無法新增書籍，請重試。",
     "backLabel": "← 書架",
-    "quoteCount_one": "{{count}} 條摘錄",
-    "quoteCount_other": "{{count}} 條摘錄",
-    "noQuotesFromBook": "這本書還沒有摘錄。",
+    "quoteCount_one": "{{count}} 條語錄",
+    "quoteCount_other": "{{count}} 條語錄",
+    "noQuotesFromBook": "這本書還沒有語錄。",
     "editBook": "編輯書籍",
     "duplicateTitle": "已有同名書籍。",
     "deleteBookTitle": "刪除書籍",
-    "deleteBookMessage": "此書籍及其 {{count}} 條摘錄將永久刪除。",
+    "deleteBookMessage": "此書籍及其 {{count}} 條語錄將永久刪除。",
     "deleteConfirm": "刪除",
     "deleteBookFailed": "無法刪除書籍，請重試。"
   },
@@ -77,7 +77,7 @@
     "signOut": "登出",
     "deleteAccount": "刪除帳戶",
     "deleteTitle": "刪除帳戶",
-    "deleteMessage": "您的帳戶將在 30 天後永久刪除，包括所有摘錄和資料。您將立即登出。",
+    "deleteMessage": "您的帳戶將在 30 天後永久刪除，包括所有語錄和資料。您將立即登出。",
     "deleteConfirm": "刪除",
     "cancel": "取消",
     "tagline": "Quotes. Keep the best. Nothing else.",
@@ -115,7 +115,7 @@
   },
   "search": {
     "heading": "搜尋",
-    "placeholder": "搜尋摘錄、書籍…",
+    "placeholder": "搜尋語錄、書籍、作者…",
     "noResults": "「{{query}}」暫無結果"
   },
   "quoteDetail": {
@@ -123,15 +123,17 @@
     "copied": "已複製",
     "by": "{{author}}",
     "pageRef": "第 {{page}} 頁",
-    "deleteTitle": "刪除摘錄",
-    "deleteMessage": "此摘錄將永久刪除。",
+    "deleteTitle": "刪除語錄",
+    "deleteMessage": "此語錄將永久刪除。",
     "deleteConfirm": "刪除",
-    "deleteFailed": "無法刪除摘錄，請重試。",
-    "saveFailed": "無法儲存變更，請重試。"
+    "deleteFailed": "無法刪除語錄，請重試。",
+    "saveFailed": "無法儲存變更，請重試。",
+    "edit": "編輯",
+    "delete": "刪除"
   },
   "deleted": {
     "title": "帳戶已排定\n刪除",
-    "body": "您的帳戶及所有摘錄將於 {{date}} 永久刪除。\n\n點擊下方取消並保留帳戶。",
+    "body": "您的帳戶及所有語錄將於 {{date}} 永久刪除。\n\n點擊下方取消並保留帳戶。",
     "recover": "恢復帳戶",
     "signOut": "登出",
     "errorTitle": "無法恢復",
@@ -140,6 +142,16 @@
   "signIn": {
     "subtitle": "碰到你的，留下。",
     "button": "使用 Google 登入"
+  },
+  "reflections": {
+    "heading": "感受",
+    "placeholder": "寫下你的感受…",
+    "save": "儲存",
+    "cancel": "取消",
+    "empty": "還沒有感受。",
+    "deleteTitle": "刪除感受",
+    "deleteConfirm": "此感受將永久刪除。",
+    "deleteConfirmYes": "刪除"
   },
   "common": {
     "ok": "確定",

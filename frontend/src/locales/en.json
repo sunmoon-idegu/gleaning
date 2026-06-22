@@ -68,6 +68,48 @@
   "quotes": {
     "empty": "No quotes yet."
   },
+  "reflections": {
+    "heading": "Reflections",
+    "placeholder": "Write your reflection…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "cmdSave": "⌘↵ to save",
+    "empty": "No reflections yet.",
+    "addTitle": "Add reflection",
+    "editTitle": "Edit reflection",
+    "deleteTitle": "Delete reflection",
+    "deleteConfirm": "Delete this reflection?",
+    "deleteConfirmYes": "Delete"
+  },
+  "quoteDetail": {
+    "notFound": "Quote not found.",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "edit": "Edit",
+    "delete": "Delete",
+    "editHeading": "Edit quote",
+    "deleteHeading": "Delete quote?",
+    "deleteBody": "This cannot be undone.",
+    "deleting": "Deleting…",
+    "save": "Save"
+  },
+  "bookDetail": {
+    "pageLabel": "Book",
+    "loading": "Loading…",
+    "error": "Failed to load book. Please refresh.",
+    "quoteSingular": "{{count}} quote",
+    "quotePlural": "{{count}} quotes",
+    "editTitle": "Edit book",
+    "deleteTitle": "Delete book",
+    "addQuote": "Add quote",
+    "empty": "No quotes from this book yet.",
+    "editHeading": "Edit book",
+    "deleteHeading": "Delete book?",
+    "deleteBody": "This will delete the book and all its quotes. This cannot be undone.",
+    "deleting": "Deleting…",
+    "delete": "Delete",
+    "save": "Save"
+  },
   "search": {
     "heading": "Search",
     "placeholder": "Search quotes, books, authors…",

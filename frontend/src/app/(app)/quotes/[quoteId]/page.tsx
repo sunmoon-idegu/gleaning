@@ -9,11 +9,12 @@ import { BookOpen, Copy, Check, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ReflectionsSection } from "@/components/reflections-section";
 
 const sourceIcons = { book: BookOpen };
 
 export default function QuotePage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { quoteId } = useParams<{ quoteId: string }>();
   const { getToken, isLoaded } = useAuth();
   const router = useRouter();
@@ -93,7 +94,7 @@ export default function QuotePage() {
   if (error || !quote) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground">
-        <p>Quote not found.</p>
+        <p>{t("quoteDetail.notFound")}</p>
       </div>
     );
   }
@@ -131,21 +132,23 @@ export default function QuotePage() {
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5">
           {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? "Copied!" : "Copy"}
+          {copied ? t("quoteDetail.copied") : t("quoteDetail.copy")}
         </Button>
         <Button variant="outline" size="sm" onClick={openEdit} className="gap-1.5">
           <Pencil size={14} />
-          Edit
+          {t("quoteDetail.edit")}
         </Button>
         <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)} className="gap-1.5 text-destructive hover:text-destructive">
           <Trash2 size={14} />
-          Delete
+          {t("quoteDetail.delete")}
         </Button>
       </div>
 
+      <ReflectionsSection targetType="quote" targetId={quoteId} />
+
       <Dialog open={editOpen} onOpenChange={(open) => !open && setEditOpen(false)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit quote</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("quoteDetail.editHeading")}</DialogTitle></DialogHeader>
           <div
             className="py-1"
             onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") handleEditSubmit(); }}
@@ -159,10 +162,10 @@ export default function QuotePage() {
             />
           </div>
           <DialogFooter className="items-center">
-            <p className="text-xs text-muted-foreground mr-auto">⌘↵ to save</p>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <p className="text-xs text-muted-foreground mr-auto">{t("add.cmdSave")}</p>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>{t("add.cancel")}</Button>
             <Button onClick={handleEditSubmit} disabled={!editText.trim() || submitting}>
-              {submitting ? "Saving…" : "Save"}
+              {submitting ? t("add.saving") : t("quoteDetail.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -170,12 +173,12 @@ export default function QuotePage() {
 
       <Dialog open={deleteOpen} onOpenChange={(open) => !open && setDeleteOpen(false)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Delete quote?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">This cannot be undone.</p>
+          <DialogHeader><DialogTitle>{t("quoteDetail.deleteHeading")}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("quoteDetail.deleteBody")}</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>{t("add.cancel")}</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? t("quoteDetail.deleting") : t("quoteDetail.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -115,7 +115,7 @@
   },
   "search": {
     "heading": "Search",
-    "placeholder": "Search quotes, books, tags…",
+    "placeholder": "Search quote, book, author…",
     "noResults": "No results for \"{{query}}\""
   },
   "quoteDetail": {
@@ -127,7 +127,9 @@
     "deleteMessage": "This quote will be permanently deleted.",
     "deleteConfirm": "Delete",
     "deleteFailed": "Could not delete quote. Try again.",
-    "saveFailed": "Could not save changes. Try again."
+    "saveFailed": "Could not save changes. Try again.",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "deleted": {
     "title": "Account scheduled\nfor deletion",
@@ -140,6 +142,16 @@
   "signIn": {
     "subtitle": "Quotes. Keep the best. Nothing else.",
     "button": "Sign in with Google"
+  },
+  "reflections": {
+    "heading": "Reflections",
+    "placeholder": "Write your reflection…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "empty": "No reflections yet.",
+    "deleteTitle": "Delete Reflection",
+    "deleteConfirm": "This reflection will be permanently deleted.",
+    "deleteConfirmYes": "Delete"
   },
   "common": {
     "ok": "OK",

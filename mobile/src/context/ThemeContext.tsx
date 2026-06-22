@@ -82,7 +82,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: "light", colors: palette.light, setTheme: () => {}, cycleTheme: () => {},
-  feedMode: "list", setFeedMode: () => {},
+  feedMode: "card", setFeedMode: () => {},
   sortOrder: "newest", setSortOrder: () => {},
   appFontSize: "medium", setAppFontSize: () => {},
   language: "en", setLanguage: () => {},
@@ -93,7 +93,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { getToken, isSignedIn } = useAuth();
 
   const [theme, setThemeState] = useState<ThemeMode>(systemDark ? "dark" : "light");
-  const [feedMode, setFeedModeState] = useState<FeedMode>("list");
+  const [feedMode, setFeedModeState] = useState<FeedMode>("card");
   const [sortOrder, setSortOrderState] = useState<SortOrder>("newest");
   const [appFontSize, setAppFontSizeState] = useState<AppFontSize>("medium");
   const [language, setLanguageState] = useState<AppLanguage>(i18n.language as AppLanguage);

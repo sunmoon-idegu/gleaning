@@ -1,10 +1,13 @@
 import { useAuth } from "@clerk/clerk-expo";
 import Feather from "@expo/vector-icons/Feather";
 import * as Clipboard from "expo-clipboard";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
+  Animated,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +17,7 @@ import {
 } from "react-native";
 import { useTheme, FONT_SIZES } from "../context/ThemeContext";
 import { apiFetch, type Quote } from "../lib/api";
+import ReflectionsSection from "../components/ReflectionsSection";
 
 function sourceLabel(quote: Quote, t: (key: string, opts?: Record<string, unknown>) => string): string | null {
   if (quote.source_type === "book" && quote.book) {
@@ -42,6 +46,10 @@ export default function QuoteDetailScreen({ quote, onBack, onDelete, onUpdate }:
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(quote.text);
   const [saving, setSaving] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const moreRef = useRef<View>(null);
+  const menuAnim = useRef(new Animated.Value(0)).current;
 
   const src = sourceLabel(quote, t);
   const localeMap = { en: "en-US", zh: "zh-TW", ja: "ja-JP" } as const;
@@ -60,6 +68,7 @@ export default function QuoteDetailScreen({ quote, onBack, onDelete, onUpdate }:
   }
 
   function handleDelete() {
+    setShowMore(false);
     Alert.alert(
       t("quoteDetail.deleteTitle"),
       t("quoteDetail.deleteMessage"),
@@ -85,6 +94,11 @@ export default function QuoteDetailScreen({ quote, onBack, onDelete, onUpdate }:
         },
       ]
     );
+  }
+
+  function handleEditFromMore() {
+    setShowMore(false);
+    setEditing(true);
   }
 
   async function handleSaveEdit() {
@@ -122,7 +136,7 @@ export default function QuoteDetailScreen({ quote, onBack, onDelete, onUpdate }:
             <TouchableOpacity onPress={handleCancelEdit} style={styles.headerBtn} hitSlop={12}>
               <Text style={[styles.headerBtnText, { color: colors.mutedFg }]}>{t("settings.cancel")}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleSaveEdit} style={styles.headerBtn} hitSlop={12} disabled={saving}>
+            <TouchableOpacity onPress={handleSaveEdit} style={styles.headerBtn} hitSlop={12} disabled={saving || !editText.trim()}>
               <Text style={[styles.headerBtnText, { color: colors.primary }]}>{t("add.save")}</Text>
             </TouchableOpacity>
           </>
@@ -132,11 +146,23 @@ export default function QuoteDetailScreen({ quote, onBack, onDelete, onUpdate }:
               <Feather name="arrow-left" size={22} color={colors.fg} />
             </TouchableOpacity>
             <View style={styles.headerActions}>
-              <TouchableOpacity onPress={() => setEditing(true)} style={styles.iconBtn} hitSlop={12}>
-                <Feather name="edit-2" size={18} color={colors.mutedFg} />
+              <TouchableOpacity onPress={handleCopy} style={styles.iconBtn} hitSlop={12}>
+                <Feather name={copied ? "check" : "copy"} size={18} color={copied ? "#16a34a" : colors.mutedFg} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleDelete} style={styles.iconBtn} hitSlop={12} disabled={deleting}>
-                <Feather name="trash-2" size={18} color={colors.mutedFg} />
+              <TouchableOpacity
+                ref={moreRef}
+                onPress={() => {
+                  moreRef.current?.measure((_fx: number, _fy: number, _w: number, h: number, _px: number, py: number) => {
+                    setMenuPos({ top: py + h + 4, right: 12 });
+                    menuAnim.setValue(0);
+                    setShowMore(true);
+                    Animated.timing(menuAnim, { toValue: 1, duration: 160, useNativeDriver: true }).start();
+                  });
+                }}
+                style={styles.iconBtn}
+                hitSlop={12}
+              >
+                <Feather name="more-horizontal" size={20} color={colors.mutedFg} />
               </TouchableOpacity>
             </View>
           </>
@@ -170,23 +196,45 @@ export default function QuoteDetailScreen({ quote, onBack, onDelete, onUpdate }:
         )}
 
         <Text style={[styles.date, { color: colors.mutedFg }]}>{date}</Text>
+
+        <ReflectionsSection targetType="quote" targetId={quote.id} />
       </ScrollView>
 
-      {/* Actions */}
-      {!editing && (
-        <View style={[styles.actions, { borderTopColor: colors.border }]}>
-          <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: colors.muted }]}
-            onPress={handleCopy}
-            activeOpacity={0.7}
-          >
-            <Feather name={copied ? "check" : "copy"} size={16} color={copied ? "#16a34a" : colors.fg} />
-            <Text style={[styles.actionLabel, { color: copied ? "#16a34a" : colors.fg }]}>
-              {copied ? t("quoteDetail.copied") : t("quoteDetail.copy")}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Popup menu */}
+      <Modal visible={showMore} transparent animationType="none" onRequestClose={() => setShowMore(false)}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowMore(false)}>
+          {menuPos && (
+            <Animated.View
+              style={[styles.menu, {
+                top: menuPos.top,
+                right: menuPos.right,
+                backgroundColor: colors.cardBg,
+                opacity: menuAnim,
+                transform: [{ translateY: menuAnim.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }],
+              }]}
+              onStartShouldSetResponder={() => true}
+            >
+              <TouchableOpacity
+                style={[styles.menuRow, { borderBottomColor: colors.border, backgroundColor: colors.cardBg }]}
+                onPress={handleEditFromMore}
+                activeOpacity={0.7}
+              >
+                <Feather name="edit-2" size={14} color={colors.fg} />
+                <Text style={[styles.menuRowText, { color: colors.fg }]}>{t("quoteDetail.edit")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.menuRow, { backgroundColor: colors.cardBg, borderBottomWidth: 0 }]}
+                onPress={handleDelete}
+                activeOpacity={0.7}
+                disabled={deleting}
+              >
+                <Feather name="trash-2" size={14} color="#ef4444" />
+                <Text style={[styles.menuRowText, { color: "#ef4444" }]}>{t("quoteDetail.delete")}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -218,16 +266,25 @@ const styles = StyleSheet.create({
   },
   source: { fontSize: 14, lineHeight: 20, marginBottom: 12 },
   date: { fontSize: 13, marginTop: 4 },
-  actions: {
+  // Popup menu
+  menu: {
+    position: "absolute",
+    width: 140,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  menuRow: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  actionBtn: {
-    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, paddingVertical: 13, borderRadius: 12,
-  },
-  actionLabel: { fontSize: 15, fontWeight: "500" },
+  menuRowText: { fontSize: 15 },
 });

@@ -3,6 +3,7 @@
 import type { Quote } from "@/lib/api";
 import { BookOpen, Video, Mic } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 const sourceIcons = {
   book: BookOpen,
@@ -14,9 +15,12 @@ const sourceIcons = {
 interface QuoteCardProps {
   quote: Quote;
   hideDate?: boolean;
+  hideSource?: boolean;
 }
 
-export function QuoteCard({ quote, hideDate }: QuoteCardProps) {
+export function QuoteCard({ quote, hideDate, hideSource }: QuoteCardProps) {
+  const { i18n } = useTranslation();
+  const dateLocale = i18n.language === "zh" ? "zh-TW" : i18n.language === "ja" ? "ja-JP" : "en-US";
   const isChinese = /[一-鿿]/.test(quote.text);
   const len = quote.text.length;
   const sizeClass =
@@ -40,7 +44,7 @@ export function QuoteCard({ quote, hideDate }: QuoteCardProps) {
 
       {/* Footer: source + date */}
       <footer className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1">
-        {(title || author || page) && (
+        {!hideSource && (title || author || page) && (
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             {SourceIcon && <SourceIcon size={12} className="shrink-0" />}
             {title && <span>{title}</span>}
@@ -49,9 +53,12 @@ export function QuoteCard({ quote, hideDate }: QuoteCardProps) {
             {author && <span>{author}</span>}
           </span>
         )}
+        {hideSource && page && (
+          <span className="text-sm text-muted-foreground">{page}</span>
+        )}
         {!hideDate && (
-          <span className="text-xs text-muted-foreground/50 ml-auto">
-            {new Date(quote.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          <span className={`text-xs text-muted-foreground/50 ${hideSource ? "" : "ml-auto"}`}>
+            {new Date(quote.created_at).toLocaleDateString(dateLocale, { month: "short", day: "numeric", year: "numeric" })}
           </span>
         )}
       </footer>

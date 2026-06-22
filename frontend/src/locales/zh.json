@@ -17,8 +17,8 @@
     "support": "支援"
   },
   "add": {
-    "heading": "新增摘錄",
-    "placeholder": "摘錄內容…",
+    "heading": "新增語錄",
+    "placeholder": "語錄內容…",
     "saving": "儲存中…",
     "source": "來源",
     "sourceBook": "書籍",
@@ -28,7 +28,7 @@
     "bookTitle": "書名",
     "addBook": "新增書籍",
     "addingBook": "新增中…",
-    "saveQuote": "儲存摘錄",
+    "saveQuote": "儲存語錄",
     "cancel": "取消",
     "cmdSave": "⌘↵ 儲存"
   },
@@ -66,11 +66,53 @@
     "langOther": "其他"
   },
   "quotes": {
-    "empty": "還沒有摘錄。"
+    "empty": "還沒有語錄。"
+  },
+  "reflections": {
+    "heading": "感受",
+    "placeholder": "寫下你的感受…",
+    "save": "儲存",
+    "cancel": "取消",
+    "cmdSave": "⌘↵ 儲存",
+    "empty": "還沒有感受。",
+    "addTitle": "新增感受",
+    "editTitle": "編輯感受",
+    "deleteTitle": "刪除感受",
+    "deleteConfirm": "確定刪除？",
+    "deleteConfirmYes": "刪除"
+  },
+  "quoteDetail": {
+    "notFound": "找不到此語錄。",
+    "copy": "複製",
+    "copied": "已複製！",
+    "edit": "編輯",
+    "delete": "刪除",
+    "editHeading": "編輯語錄",
+    "deleteHeading": "刪除語錄？",
+    "deleteBody": "此操作無法復原。",
+    "deleting": "刪除中…",
+    "save": "儲存"
+  },
+  "bookDetail": {
+    "pageLabel": "書籍",
+    "loading": "載入中…",
+    "error": "載入書籍失敗，請重新整理。",
+    "quoteSingular": "{{count}} 則語錄",
+    "quotePlural": "{{count}} 則語錄",
+    "editTitle": "編輯書籍",
+    "deleteTitle": "刪除書籍",
+    "addQuote": "新增語錄",
+    "empty": "此書籍尚無語錄。",
+    "editHeading": "編輯書籍",
+    "deleteHeading": "刪除書籍？",
+    "deleteBody": "這將刪除此書籍及其所有語錄，此操作無法復原。",
+    "deleting": "刪除中…",
+    "delete": "刪除",
+    "save": "儲存"
   },
   "search": {
     "heading": "搜尋",
-    "placeholder": "搜尋摘錄、書籍、作者…",
+    "placeholder": "搜尋語錄、書籍、作者…",
     "noResults": "「{{query}}」暫無結果"
   },
   "help": {
@@ -78,12 +120,12 @@
     "shortcuts": {
       "heading": "鍵盤快捷鍵",
       "quickAdd": "快速新增",
-      "quickAddDetail": "從任何頁面開啟新增摘錄視窗",
+      "quickAddDetail": "從任何頁面開啟新增語錄視窗",
       "search": "搜尋",
-      "searchDetail": "搜尋所有摘錄與書籍",
+      "searchDetail": "搜尋所有語錄與書籍",
       "displayMode": "全版顯示模式",
       "displayModeDetail": "僅限語錄頁面 — 隱藏導覽列、計數器與日期",
-      "nextQuote": "下一條摘錄",
+      "nextQuote": "下一條語錄",
       "nextQuoteDetail": "僅限語錄頁面"
     },
     "faq": {
@@ -93,13 +135,13 @@
       "q2": "如何進入和退出全版顯示模式？",
       "a2": "在桌面版，於語錄頁面按下 F 鍵。在行動裝置上，雙擊引用卡片。再次按 F 或雙擊即可退出。",
       "q3": "⌘E 有什麼功能？",
-      "a3": "⌘E（Windows/Linux 為 Ctrl+E）可從應用程式的任何頁面開啟新增摘錄視窗，無需先導覽到特定頁面。",
-      "q4": "可以不填書籍直接新增摘錄嗎？",
-      "a4": "可以。唯一必填的欄位是摘錄文字。若留空書籍欄位，摘錄將直接儲存而不附帶來源。",
-      "q5": "如何整理我的摘錄？",
-      "a5": "書架會依語言分組顯示您的書籍。點擊任一本書即可查看其所有摘錄，也可以直接在書籍頁面新增摘錄。",
-      "q6": "如何編輯或刪除摘錄？",
-      "a6": "點擊任一摘錄開啟詳細頁面，頁面中有編輯和刪除按鈕。"
+      "a3": "⌘E（Windows/Linux 為 Ctrl+E）可從應用程式的任何頁面開啟新增語錄視窗，無需先導覽到特定頁面。",
+      "q4": "可以不填書籍直接新增語錄嗎？",
+      "a4": "可以。唯一必填的欄位是語錄文字。若留空書籍欄位，語錄將直接儲存而不附帶來源。",
+      "q5": "如何整理我的語錄？",
+      "a5": "書架會依語言分組顯示您的書籍。點擊任一本書即可查看其所有語錄，也可以直接在書籍頁面新增語錄。",
+      "q6": "如何編輯或刪除語錄？",
+      "a6": "點擊任一語錄開啟詳細頁面，頁面中有編輯和刪除按鈕。"
     },
     "contact": {
       "heading": "聯絡我們",

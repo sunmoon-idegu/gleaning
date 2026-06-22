@@ -68,6 +68,48 @@
   "quotes": {
     "empty": "まだ引用がありません。"
   },
+  "reflections": {
+    "heading": "感想",
+    "placeholder": "感想を書いてください…",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "cmdSave": "⌘↵ で保存",
+    "empty": "まだ感想がありません。",
+    "addTitle": "感想を追加",
+    "editTitle": "感想を編集",
+    "deleteTitle": "感想を削除",
+    "deleteConfirm": "この感想を削除しますか？",
+    "deleteConfirmYes": "削除"
+  },
+  "quoteDetail": {
+    "notFound": "引用が見つかりません。",
+    "copy": "コピー",
+    "copied": "コピーしました！",
+    "edit": "編集",
+    "delete": "削除",
+    "editHeading": "引用を編集",
+    "deleteHeading": "引用を削除しますか？",
+    "deleteBody": "この操作は元に戻せません。",
+    "deleting": "削除中…",
+    "save": "保存"
+  },
+  "bookDetail": {
+    "pageLabel": "本",
+    "loading": "読み込み中…",
+    "error": "本の読み込みに失敗しました。更新してください。",
+    "quoteSingular": "{{count}} 件の引用",
+    "quotePlural": "{{count}} 件の引用",
+    "editTitle": "本を編集",
+    "deleteTitle": "本を削除",
+    "addQuote": "引用を追加",
+    "empty": "この本にはまだ引用がありません。",
+    "editHeading": "本を編集",
+    "deleteHeading": "本を削除しますか？",
+    "deleteBody": "この本とすべての引用が削除されます。この操作は元に戻せません。",
+    "deleting": "削除中…",
+    "delete": "削除",
+    "save": "保存"
+  },
   "search": {
     "heading": "検索",
     "placeholder": "引用、本、著者を検索…",

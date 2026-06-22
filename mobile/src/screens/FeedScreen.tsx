@@ -118,7 +118,7 @@ export default function FeedScreen() {
       toValue: 0,
       duration: 300,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }
 
@@ -127,7 +127,7 @@ export default function FeedScreen() {
       toValue: width,
       duration: 260,
       easing: Easing.in(Easing.cubic),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start(() => {
       setShowDetail(false);
       setSelectedQuote(null);
@@ -139,12 +139,12 @@ export default function FeedScreen() {
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, gs) =>
         (gs.moveX - gs.dx) < width * 0.35 && Math.abs(gs.dx) > Math.abs(gs.dy) && gs.dx > 8,
-      onPanResponderMove: Animated.event([null, { dx: slideAnim }], { useNativeDriver: true }),
+      onPanResponderMove: (_e, gs) => { if (gs.dx > 0) slideAnim.setValue(gs.dx); },
       onPanResponderRelease: (_e, gs) => {
         if (gs.dx > width * 0.45 || gs.vx > 0.8) {
           closeDetail();
         } else {
-          Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+          Animated.spring(slideAnim, { toValue: 0, useNativeDriver: false }).start();
         }
       },
     })

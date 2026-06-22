@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from auth import verify_token
 from database import check_db, create_tables
 from models import User
-from routers import books, quotes, search, ocr, users, feedback
+from routers import books, quotes, search, ocr, users, feedback, reflections
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ app.include_router(books.router)
 app.include_router(quotes.router)
 app.include_router(search.router)
 app.include_router(ocr.router)
+app.include_router(reflections.router)
 
 
 @app.get("/health")

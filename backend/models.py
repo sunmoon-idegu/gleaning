@@ -68,3 +68,18 @@ class Feedback(Base):
     category = Column(Text, nullable=True)
     message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Reflection(Base):
+    __tablename__ = "reflections"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    target_type = Column(Text, nullable=False)  # 'quote' | 'book'
+    target_id = Column(UUID(as_uuid=True), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_reflections_target", "user_id", "target_type", "target_id"),
+    )

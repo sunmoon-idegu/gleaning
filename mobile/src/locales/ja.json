@@ -127,7 +127,9 @@
     "deleteMessage": "この引用は完全に削除されます。",
     "deleteConfirm": "削除",
     "deleteFailed": "引用を削除できませんでした。再試行してください。",
-    "saveFailed": "変更を保存できませんでした。再試行してください。"
+    "saveFailed": "変更を保存できませんでした。再試行してください。",
+    "edit": "編集",
+    "delete": "削除"
   },
   "deleted": {
     "title": "アカウント削除\n予定",
@@ -140,6 +142,16 @@
   "signIn": {
     "subtitle": "大切な言葉を、ここに。",
     "button": "Google でサインイン"
+  },
+  "reflections": {
+    "heading": "感想",
+    "placeholder": "感想を書いてください…",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "empty": "まだ感想がありません。",
+    "deleteTitle": "感想を削除",
+    "deleteConfirm": "この感想は完全に削除されます。",
+    "deleteConfirmYes": "削除"
   },
   "common": {
     "ok": "OK",

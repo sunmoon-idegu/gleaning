@@ -87,6 +87,28 @@ class QuoteOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── Reflections ────────────────────────────────────────────────────────────
+
+class ReflectionCreate(BaseModel):
+    target_type: str
+    target_id: UUID
+    content: str
+
+
+class ReflectionUpdate(BaseModel):
+    content: str
+
+
+class ReflectionOut(BaseModel):
+    id: UUID
+    target_type: str
+    target_id: UUID
+    content: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ── Search ─────────────────────────────────────────────────────────────────
 
 class SearchResult(BaseModel):

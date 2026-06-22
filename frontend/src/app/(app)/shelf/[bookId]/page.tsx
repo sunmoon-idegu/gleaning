@@ -3,19 +3,21 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
+import { useTranslation } from "react-i18next";
 import { apiFetch, waitForToken, type BookWithQuotes, type Quote } from "@/lib/api";
 import { QuoteCard } from "@/components/quote-card";
-import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ReflectionsSection } from "@/components/reflections-section";
 
 function openAddQuote(bookId: string) {
   window.dispatchEvent(new CustomEvent("open-add-quote", { detail: { bookId } }));
 }
 
 export default function BookPage() {
+  const { t } = useTranslation();
   const { bookId } = useParams<{ bookId: string }>();
   const { getToken, isLoaded } = useAuth();
   const router = useRouter();
@@ -88,13 +90,19 @@ export default function BookPage() {
   }
 
   if (loading) {
-    return <div className="py-12 text-center text-neutral-400 text-sm animate-pulse">Loading…</div>;
+    return (
+      <div className="animate-pulse space-y-4 pt-4">
+        <div className="h-5 bg-muted rounded w-1/3" />
+        <div className="h-4 bg-muted rounded w-1/4 mt-1" />
+        <div className="h-3 bg-muted rounded w-16 mt-2" />
+      </div>
+    );
   }
 
   if (error) {
     return (
       <div className="text-center py-32 text-neutral-400">
-        <p className="text-sm">Failed to load book. Please refresh.</p>
+        <p className="text-sm">{t("bookDetail.error")}</p>
       </div>
     );
   }
@@ -103,66 +111,68 @@ export default function BookPage() {
 
   return (
     <div>
-      <Link href="/shelf" className="flex items-center gap-1.5 text-sm text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 mb-8">
-        <ArrowLeft size={14} /> Shelf
-      </Link>
+      <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/50 mb-8">{t("bookDetail.pageLabel")}</p>
 
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-10">
         <div>
-          <h1 className="text-xl font-semibold">{book.title}</h1>
-          {book.author && <p className="text-sm text-neutral-500 mt-1">{book.author}</p>}
-          <p className="text-xs text-neutral-400 mt-2">
-            {book.quotes.length} {book.quotes.length === 1 ? "quote" : "quotes"}
+          <div className="flex items-center gap-1.5 group/title">
+            <h1 className="text-2xl font-semibold">{book.title}</h1>
+            <div className="flex items-center gap-0.5 opacity-0 group-hover/title:opacity-100 transition-opacity">
+              <button
+                onClick={openEdit}
+                className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                title={t("bookDetail.editTitle")}
+              >
+                <Pencil size={14} />
+              </button>
+              <button
+                onClick={() => setDeleteOpen(true)}
+                className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors"
+                title={t("bookDetail.deleteTitle")}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+          {book.author && <p className="text-sm text-muted-foreground mt-1">{book.author}</p>}
+          <p className="text-xs text-muted-foreground/50 mt-1.5">
+            {t(book.quotes.length === 1 ? "bookDetail.quoteSingular" : "bookDetail.quotePlural", { count: book.quotes.length })}
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={openEdit}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Edit book"
-          >
-            <Pencil size={15} />
-          </button>
-          <button
-            onClick={() => setDeleteOpen(true)}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
-            title="Delete book"
-          >
-            <Trash2 size={15} />
-          </button>
-          <button
-            onClick={() => openAddQuote(bookId)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <Plus size={14} /> Add quote
-          </button>
-        </div>
+        <button
+          onClick={() => openAddQuote(bookId)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 mt-1"
+        >
+          <Plus size={14} /> {t("bookDetail.addQuote")}
+        </button>
       </div>
 
       {book.quotes.length === 0 ? (
-        <p className="text-sm text-neutral-400">No quotes from this book yet.</p>
+        <p className="text-sm text-neutral-400 mt-10">{t("bookDetail.empty")}</p>
       ) : (
         <div>
           {book.quotes.map((q) => (
             <div key={q.id} className="relative px-4 py-8">
-              <QuoteCard quote={q} />
+              <QuoteCard quote={q} hideSource hideDate />
             </div>
           ))}
         </div>
       )}
 
+      <ReflectionsSection targetType="book" targetId={bookId} defaultRows={6} />
+
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => !o && setEditOpen(false)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit book</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("bookDetail.editHeading")}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-1">
-            <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Title" autoFocus />
-            <Input value={editAuthor} onChange={(e) => setEditAuthor(e.target.value)} placeholder="Author (optional)" />
+            <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder={t("shelf.titlePlaceholder")} autoFocus />
+            <Input value={editAuthor} onChange={(e) => setEditAuthor(e.target.value)} placeholder={t("shelf.authorPlaceholder")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>{t("add.cancel")}</Button>
             <Button onClick={handleEditSave} disabled={!editTitle.trim() || saving}>
-              {saving ? "Saving…" : "Save"}
+              {saving ? t("add.saving") : t("bookDetail.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -171,12 +181,12 @@ export default function BookPage() {
       {/* Delete dialog */}
       <Dialog open={deleteOpen} onOpenChange={(o) => !o && setDeleteOpen(false)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Delete book?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">This will delete the book and all its quotes. This cannot be undone.</p>
+          <DialogHeader><DialogTitle>{t("bookDetail.deleteHeading")}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("bookDetail.deleteBody")}</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>{t("add.cancel")}</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? t("bookDetail.deleting") : t("bookDetail.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

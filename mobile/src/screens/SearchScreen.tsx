@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   heading: { fontSize: 22, fontWeight: "600", padding: 20, paddingBottom: 12 },
   searchRow: { paddingHorizontal: 16, paddingBottom: 8 },
-  input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 15 },
+  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, height: 44, fontSize: 15 },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
   emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center", marginTop: 60 },
   empty: { fontSize: 15 },
