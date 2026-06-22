@@ -59,7 +59,7 @@ app.include_router(ocr.router)
 app.include_router(reflections.router)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     db_status = check_db()
     ok = db_status["status"] == "ok"
