@@ -155,17 +155,17 @@ export function ReflectionsSection({ targetType, targetId, defaultRows = 6 }: Pr
             rows={defaultRows}
             className="w-full text-base bg-muted/50 rounded-md px-3 py-2.5 resize-none outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/40"
           />
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-2 mt-2">
             <button
               onClick={handleAdd}
               disabled={!newText.trim()}
-              className="text-xs font-medium text-primary hover:opacity-70 disabled:opacity-30 disabled:cursor-default transition-opacity"
+              className="text-xs font-medium px-3 py-1.5 rounded-md border border-foreground/20 bg-foreground text-background hover:opacity-80 disabled:opacity-30 disabled:cursor-default transition-opacity"
             >
               {t("reflections.save")}
             </button>
             <button
               onClick={() => { setAdding(false); setNewText(""); }}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               {t("reflections.cancel")}
             </button>

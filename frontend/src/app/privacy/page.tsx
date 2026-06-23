@@ -58,9 +58,19 @@ export default function PrivacyPage() {
               <span className="font-medium text-neutral-900 dark:text-neutral-100">Neon</span> — Our database provider. Your content is stored on Neon's PostgreSQL infrastructure. See <a href="https://neon.tech/privacy" className="underline hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">neon.tech/privacy</a>.
             </li>
             <li>
-              <span className="font-medium text-neutral-900 dark:text-neutral-100">Anthropic</span> — When you use the OCR feature to extract text from a photo, the image is sent to Anthropic's Claude API for text recognition. Images are not stored by Anthropic after processing.
+              <span className="font-medium text-neutral-900 dark:text-neutral-100">Sentry</span> — We use Sentry for error monitoring. If the app crashes or encounters an error, technical details (such as the error message and device type) are sent to Sentry to help us diagnose and fix bugs. This data does not include your quotes or personal content. See <a href="https://sentry.io/privacy/" className="underline hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">sentry.io/privacy</a>.
+            </li>
+            <li>
+              <span className="font-medium text-neutral-900 dark:text-neutral-100">OCR processing</span> — When you use the camera feature to extract text from a photo, the image is sent to a third-party text recognition service. Images are not retained after processing.
             </li>
           </ul>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-lg font-semibold mb-3">Data Security</h2>
+          <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
+            We rely on industry-standard secure cloud providers to store and protect your data. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.
+          </p>
         </section>
 
         <section className="mb-10">
@@ -73,7 +83,7 @@ export default function PrivacyPage() {
         <section className="mb-10">
           <h2 className="text-lg font-semibold mb-3">Your Rights</h2>
           <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-            You can delete your account and all associated data at any time from the Settings screen in the app. For any other requests regarding your data, contact us at the email below.
+            You can delete your account and all associated data at any time from the Settings screen in the app. For any other requests regarding your data, reach us through the feedback form in the app.
           </p>
         </section>
 
@@ -94,7 +104,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold mb-3">Contact</h2>
           <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-            For privacy-related questions, contact us at <a href="mailto:sunmoon.idegu@gmail.com" className="underline hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">sunmoon.idegu@gmail.com</a>.
+            For privacy-related questions, reach us through the feedback form in the app.
           </p>
         </section>
       </div>

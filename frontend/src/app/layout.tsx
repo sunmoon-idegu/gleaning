@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: "Gleaning",
     template: "%s · Gleaning",
   },
-  description: "Capture and recall beautiful sentences",
+  description: "Gleaning is a quote-saving app. Take a photo, draw a box around the text, and it's saved in seconds. No typing. Available on iPhone and the web.",
   icons: {
     icon: "/favicon.svg",
   },
