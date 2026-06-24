@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GleaningIcon } from "@/components/gleaning-icon";
 import { Camera, BookOpen, PenLine } from "lucide-react";
-import { AuthRedirect } from "@/components/auth-redirect";
 
 export const metadata: Metadata = {
   title: "Gleaning — Keep the sentences that stop you",
@@ -46,8 +45,6 @@ export default function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <AuthRedirect />
-
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
         <Link href="/" className="flex items-center gap-2.5">
@@ -56,7 +53,7 @@ export default function LandingPage() {
         </Link>
         <Link
           href="/sign-in"
-          className="text-sm font-medium text-[#1a1a1a]/60 dark:text-[#f0ebe3]/60 hover:text-[#1a1a1a] dark:hover:text-[#f0ebe3] transition-colors"
+          className="text-sm font-medium text-[#1a1a1a]/70 dark:text-[#f0ebe3]/70 hover:text-[#1a1a1a] dark:hover:text-[#f0ebe3] transition-colors"
         >
           Sign in →
         </Link>
@@ -67,7 +64,7 @@ export default function LandingPage() {
         <h1 className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight leading-[1.05] max-w-2xl">
           Keep the sentences that stop you.
         </h1>
-        <p className="mt-8 text-lg sm:text-xl text-[#1a1a1a]/60 dark:text-[#f0ebe3]/55 max-w-lg leading-relaxed">
+        <p className="mt-8 text-lg sm:text-xl text-[#1a1a1a]/70 dark:text-[#f0ebe3]/65 max-w-lg leading-relaxed">
           Gleaning saves quotes from books, articles, anywhere. Take a photo,
           draw a box around the text, and it&apos;s saved in seconds. No typing.
         </p>
@@ -78,7 +75,7 @@ export default function LandingPage() {
           >
             Open the web app
           </Link>
-          <span className="text-sm text-[#1a1a1a]/40 dark:text-[#f0ebe3]/40">
+          <span className="text-sm text-[#1a1a1a]/55 dark:text-[#f0ebe3]/55">
             Also on the App Store for iPhone
           </span>
         </div>
@@ -97,7 +94,7 @@ export default function LandingPage() {
               <Camera size={17} className="text-[#c9a96e]" />
             </div>
             <h3 className="font-semibold text-base mb-2">Save in seconds</h3>
-            <p className="text-[#1a1a1a]/55 dark:text-[#f0ebe3]/50 text-sm leading-relaxed">
+            <p className="text-[#1a1a1a]/70 dark:text-[#f0ebe3]/65 text-sm leading-relaxed">
               Take a photo of the page. Draw a box around the text you want.
               Gleaning reads it automatically — no typing, no copy-pasting.
             </p>
@@ -107,7 +104,7 @@ export default function LandingPage() {
               <BookOpen size={17} className="text-[#c9a96e]" />
             </div>
             <h3 className="font-semibold text-base mb-2">Browse by book</h3>
-            <p className="text-[#1a1a1a]/55 dark:text-[#f0ebe3]/50 text-sm leading-relaxed">
+            <p className="text-[#1a1a1a]/70 dark:text-[#f0ebe3]/65 text-sm leading-relaxed">
               Every quote you save is filed under its book. See everything you
               kept from each one, all together.
             </p>
@@ -117,7 +114,7 @@ export default function LandingPage() {
               <PenLine size={17} className="text-[#c9a96e]" />
             </div>
             <h3 className="font-semibold text-base mb-2">Write a reflection</h3>
-            <p className="text-[#1a1a1a]/55 dark:text-[#f0ebe3]/50 text-sm leading-relaxed">
+            <p className="text-[#1a1a1a]/70 dark:text-[#f0ebe3]/65 text-sm leading-relaxed">
               Add a note to any quote to capture what you were thinking in that
               moment. Come back to it later.
             </p>
@@ -136,7 +133,7 @@ export default function LandingPage() {
           <p className="text-2xl sm:text-3xl font-semibold tracking-tight leading-snug text-[#1a1a1a] dark:text-[#f0ebe3]">
             No tags. No organisation system. No streaks.
           </p>
-          <p className="mt-5 text-[#1a1a1a]/55 dark:text-[#f0ebe3]/50 leading-relaxed">
+          <p className="mt-5 text-[#1a1a1a]/70 dark:text-[#f0ebe3]/65 leading-relaxed">
             Just your quotes, always with you. Search when you need something.
             Let the rest surface when you least expect it.
           </p>
@@ -153,9 +150,9 @@ export default function LandingPage() {
         <div className="flex items-center gap-2.5">
           <GleaningIcon size={22} />
           <span className="font-semibold text-sm">Gleaning</span>
-          <span className="text-sm text-[#1a1a1a]/40 dark:text-[#f0ebe3]/35">· Quotes. Keep the best. Nothing else.</span>
+          <span className="text-sm text-[#1a1a1a]/55 dark:text-[#f0ebe3]/50">· Quotes. Keep the best. Nothing else.</span>
         </div>
-        <div className="flex flex-wrap items-center gap-6 text-sm text-[#1a1a1a]/45 dark:text-[#f0ebe3]/40">
+        <div className="flex flex-wrap items-center gap-6 text-sm text-[#1a1a1a]/60 dark:text-[#f0ebe3]/55">
           <Link
             href="/privacy"
             className="hover:text-[#1a1a1a] dark:hover:text-[#f0ebe3] transition-colors"
