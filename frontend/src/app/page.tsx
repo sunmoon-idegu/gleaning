@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Gleaning — Keep the sentences that stop you",
   description: "Gleaning is a quote-saving app. Take a photo, draw a box around the text, and it's saved in seconds. No typing. Available on iPhone and the web.",
   openGraph: {
-    title: "Gleaning — Quotes. Keep the best. Nothing else.",
+    title: "Gleaning — Keep the sentences that stop you",
     description: "Save quotes from books in seconds. Take a photo, draw a box, done. No tags, no system, no streaks.",
     url: "https://gleaning.io",
     siteName: "Gleaning",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gleaning — Quotes. Keep the best. Nothing else.",
+    title: "Gleaning — Keep the sentences that stop you",
     description: "Save quotes from books in seconds. Take a photo, draw a box, done.",
   },
   alternates: {

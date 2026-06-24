@@ -10,7 +10,7 @@ export function AuthRedirect() {
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      router.replace("/feed");
+      router.replace("/quotes");
     }
   }, [isLoaded, isSignedIn, router]);
 

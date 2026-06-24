@@ -80,7 +80,7 @@ function CardQuoteItem({
   );
 }
 
-export default function FeedScreen() {
+export default function QuotesScreen() {
   const { getToken } = useAuth();
   const { colors, feedMode, setFeedMode, sortOrder, appFontSize } = useTheme();
   const { t } = useTranslation();
@@ -150,23 +150,37 @@ export default function FeedScreen() {
     })
   ).current;
 
-  async function load(refresh = false) {
+  const cancelledRef = useRef(false);
+
+  const load = useCallback(async (refresh = false) => {
+    cancelledRef.current = false;
+    refresh ? setRefreshing(true) : setLoading(true);
+    setError(false);
     try {
-      refresh ? setRefreshing(true) : setLoading(true);
       const token = await getToken();
-      if (!token) return;
+      if (!token || cancelledRef.current) return;
       const data = await apiFetch<Quote[]>("/quotes", token);
+      if (cancelledRef.current) return;
       setQuotes(data);
     } catch {
-      setError(true);
+      if (!cancelledRef.current) setError(true);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!cancelledRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }
+  }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, []));
-  const onRefresh = useCallback(() => load(true), []);
+  useFocusEffect(useCallback(() => {
+    load();
+    return () => { cancelledRef.current = true; };
+  }, []));
+
+  const onRefresh = useCallback(() => {
+    load(true);
+  }, []);
+
 
   if (loading) {
     return (

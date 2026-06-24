@@ -308,7 +308,7 @@ export default function AddScreen({ onAdded }: AddScreenProps) {
       setText(""); setSourceOpen(false);
       setBookSearch(""); setBookId(""); setPage("");
       onAdded?.();
-      navigation.navigate("Feed" as never);
+      navigation.navigate("Quotes" as never);
     } catch {
       Alert.alert(t("add.errorTitle"), t("add.couldNotSave"));
     } finally {

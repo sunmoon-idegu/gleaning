@@ -78,7 +78,7 @@ export default function QuotePage() {
     setDeleting(true);
     const token = await waitForToken(getToken);
     await apiFetch(`/quotes/${quote.id}`, token, { method: "DELETE" });
-    router.push("/feed");
+    router.push("/quotes");
   }
 
   if (loading) {

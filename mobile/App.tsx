@@ -10,7 +10,7 @@ import { tokenCache } from "./src/tokenCache";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { registerDeletedHandler } from "./src/lib/api";
 import SignInScreen from "./src/screens/SignInScreen";
-import FeedScreen from "./src/screens/FeedScreen";
+import QuotesScreen from "./src/screens/QuotesScreen";
 import AddScreen from "./src/screens/AddScreen";
 import ShelfScreen from "./src/screens/ShelfScreen";
 import SearchScreen from "./src/screens/SearchScreen";
@@ -57,8 +57,8 @@ function AppTabs() {
         }}
       >
         <Tab.Screen
-          name="Feed"
-          component={FeedScreen}
+          name="Quotes"
+          component={QuotesScreen}
           options={{ tabBarLabel: t("tabs.feed"), tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIcon, focused && { backgroundColor: color + "22" }]}>
               <Feather name="list" size={20} color={color} />

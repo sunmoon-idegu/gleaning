@@ -15,7 +15,7 @@ export function Nav() {
   const { t } = useTranslation();
 
   const links = [
-    { href: "/feed", label: t("nav.feed"), icon: List },
+    { href: "/quotes", label: t("nav.feed"), icon: List },
     { href: "/shelf", label: t("nav.shelf"), icon: BookOpen },
   ];
   const [searchOpen, setSearchOpen] = useState(false);
@@ -50,7 +50,7 @@ export function Nav() {
       <header className="sticky top-0 z-40 border-b border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/feed" className="flex items-center gap-2">
+          <Link href="/quotes" className="flex items-center gap-2">
             <GleaningIcon size={24} />
             <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100 tracking-tight">Gleaning</span>
           </Link>
