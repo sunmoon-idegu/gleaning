@@ -141,6 +141,7 @@
   },
   "signIn": {
     "subtitle": "打動你的句子，放這裡。",
+    "appleButton": "使用 Apple 登入",
     "button": "使用 Google 登入"
   },
   "reflections": {

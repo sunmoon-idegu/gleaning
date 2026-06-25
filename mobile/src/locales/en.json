@@ -141,6 +141,7 @@
   },
   "signIn": {
     "subtitle": "Quotes. Keep the best. Nothing else.",
+    "appleButton": "Sign in with Apple",
     "button": "Sign in with Google"
   },
   "reflections": {

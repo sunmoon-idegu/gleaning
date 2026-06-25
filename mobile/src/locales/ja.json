@@ -141,6 +141,7 @@
   },
   "signIn": {
     "subtitle": "大切な言葉を、ここに。",
+    "appleButton": "Apple でサインイン",
     "button": "Google でサインイン"
   },
   "reflections": {

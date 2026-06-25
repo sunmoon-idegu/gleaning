@@ -27,7 +27,8 @@
           "cameraPermission": "Used to take a photo of a page to extract a quote."
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-apple-authentication"
     ],
     "android": {
       "permissions": [
